@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SRG-6000P - Boot</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <!-- Zvuk pípnutia -->
+    <audio id="beepSound" src="6000_beep.wav" preload="auto"></audio>
+
+    <div class="monitor-container" id="mainFrame">
+        <!-- Vrstva pre animácie -->
+        <div id="boot-layer"></div>
+        
+        <!-- Interaktívne tlačidlo zapnutia/vypnutia -->
+        <div id="power-button" onclick="handlePowerClick()"></div>
+        
+        <!-- Pomocný text -->
+        <div id="power-hint">Zapnúť</div>
+    </div>
+
+    <script>
+        const snd = document.getElementById('beepSound');
+        let bootStarted = false;
+        let clicks = 0;
+        let bootWaitTimeout;
+
+        // Funkcia pre zvuk s resetom (aby pípalo pri každom kliku)
+        function beep() {
+            if (snd) {
+                snd.pause();
+                snd.currentTime = 0;
+                snd.play().catch(e => console.log("Audio čaká na interakciu"));
+            }
+        }
+
+        // Responzivita pre PC/Tablet/Mobil
+        function zvacsiPanel() {
+            const frame = document.getElementById('mainFrame');
+            const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 650);
+            frame.style.transform = `scale(${scale})`;
+        }
+
+        window.onload = zvacsiPanel;
+        window.onresize = zvacsiPanel;
+
+        // Logika tlačidla (Prvý klik zapne, trojklik vypne)
+        function handlePowerClick() {
+            if (!bootStarted) {
+                startBoot();
+            } else {
+                vypnutSystem();
+            }
+        }
+
+        function startBoot() {
+            bootStarted = true;
+            const mainFrame = document.getElementById('mainFrame');
+            const bootLayer = document.getElementById('boot-layer');
+            
+            beep(); // Okamžité pípnutie po kliknutí
+            document.getElementById('power-hint').style.display = 'none';
+            mainFrame.style.backgroundImage = "url('6000_boot0_1.png')";
+
+            // Sekvencia pípnutí počas nahrávania
+            setTimeout(() => { beep(); }, 1500);
+            setTimeout(() => { beep(); }, 3000);
+            setTimeout(() => { beep(); }, 4500);
+
+            // Počkať 10s a spustiť animáciu
+            bootWaitTimeout = setTimeout(function() {
+                spustiSekvenciu(bootLayer);
+            }, 10000); 
+        }
+
+        function vypnutSystem() {
+            clicks++;
+            beep(); // Pípne pri každom stlačení (spätná väzba)
+            
+            if (clicks === 3) {
+                clearTimeout(bootWaitTimeout);
+                window.location.href = "index.html"; // Reset zariadenia
+            }
+            
+            // Reset počítadla trojkliku po 1 sekunde
+            setTimeout(() => { clicks = 0; }, 1000);
+        }
+
+        function spustiSekvenciu(bootLayer) {
+            const poradie = [
+                "6000_boot1.png", "6000_boot2.png", "6000_boot3.png", "6000_boot4.png", 
+                "6000_boot5.png", "6000_boot6.png", "6000_boot7.png", 
+                "TMA", "6000_boot8.png", "TMA", 
+                "6000_boot9.png", "6000_boot10.png", "6000_boot11.png", "6000_boot12.png",
+                "TMA"
+            ];
+
+            const casy = [1500, 1800, 1200, 1000, 2400, 500, 800, 1150, 5000, 1150, 2400, 1700, 3500, 4000, 1000];
+            let i = 0;
+
+            function cycle() {
+                if (i < poradie.length) {
+                    const nazov = poradie[i];
+                    bootLayer.style.backgroundImage = (nazov === "TMA") ? "none" : `url('${nazov}')`;
+                    setTimeout(cycle, casy[i]);
+                    i++;
+                } else {
+                    localStorage.setItem('srg_log', '1');
+                    window.location.href = "menu.html";
+                }
+            }
+            cycle();
+        }
+    </script>
+</body>
+</html>

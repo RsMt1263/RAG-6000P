@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Realizácia spoja</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            background-color: #000;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; overflow: hidden;
+        }
+
+        .background-frame {
+            width: 1000px;
+            height: 650px;
+            background: url('6000_realiz.spoja.png') no-repeat center center;
+            background-size: contain;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background-frame" id="mainFrame"></div>
+
+    <!-- Aktualizovaný názov zvukového súboru -->
+    <audio id="beep" src="6000_beep.wav" preload="auto"></audio>
+
+    <script>
+        const sound = document.getElementById('beep');
+
+        function pipni() {
+            // Vytvoríme klon audia, aby sa pípnutia mohli prekrývať, ak sú rýchlo za sebou
+            const playSound = sound.cloneNode();
+            playSound.play();
+        }
+
+        function autoScale() {
+            const frame = document.getElementById('mainFrame');
+            const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 650);
+            frame.style.transform = `scale(${scale})`;
+            frame.style.transformOrigin = 'center center';
+        }
+
+        window.onload = () => {
+            autoScale();
+
+            // --- ČASOVANIE PÍPNUTÍ (Spolu 4 pípnutia v priebehu 6 sekúnd) ---
+            
+            // 1. pípnutie (Ihneď pri štarte)
+            setTimeout(pipni, 100);
+
+            // 2. pípnutie (v čase 5.2s)
+            setTimeout(pipni, 1500);
+
+            // 3. pípnutie (v čase 5.6s)
+            setTimeout(pipni, 2000);
+
+            // 4. pípnutie (v čase 6.0s)
+            setTimeout(pipni, 2500);
+
+            // --- AUTOMATICKÉ ZAVRETIE ---
+            // Celkové trvanie zobrazenia je 8 sekúnd
+            setTimeout(() => {
+                window.location.href = "6000-spoj.html";
+            }, 4000);
+        };
+
+        window.onresize = autoScale;
+    </script>
+</body>
+</html>

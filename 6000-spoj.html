@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>R&G SRG-6000P - Dynamické spoje</title>
+    <script src="cp.js"></script>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background-color: #000;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        .computer-frame {
+            width: 1000px;
+            height: 667px;
+            background-image: url('6000_spoj.png'); 
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        #clock { position: absolute; top: 80px; right: 240px; font-size: 40px; color: #ffffff; }
+        #direction { position: absolute; top: 136px; left: 175px; width: 820px; font-size: 35px; color: #ffffff; text-align: left; white-space: nowrap; overflow: hidden; }
+        .line-info { position: absolute; top: 189px; left: 244px; font-size: 22px; color: #ffffff; }
+        .vehicle-info { position: absolute; top: 189.5px; right: 380px; font-size: 20px; color: #ffffff; }
+        .stop-count { position: absolute; top: 213px; left: 280px; font-size: 20px; color: #ffffff; }
+        
+        #marker {
+            position: absolute;
+            top: 267px;
+            left: 170px;
+            width: 0; height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 22px solid #ffffff;
+            transition: left 0.5s ease;
+        }
+
+        .current-stop-container { position: absolute; top: 343px; left: 75px; width: 785px; text-align: center; }
+        #stop-name { font-size: 24px; margin: 0; color: #ffffff; }
+        #street-name { font-size: 24px; color: #ffffff; margin: 0; opacity: 0.9; }
+
+        .prev-stops { position: absolute; top: 404px; left: 135px; width: 275px; text-align: center; font-size: 18px; color: #ffffff; }
+        .next-stops { position: absolute; top: 404.5px; right: 195px; width: 275px; text-align: center; font-size: 18px; color: #ffffff; }
+        .stop-item { height: 32px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        
+        #delay {
+            position: absolute;
+            top: 412px;
+            left: 330px;
+            width: 280px;
+            font-size: 45px;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .btn-overlay { position: absolute; cursor: pointer; z-index: 10; }
+    </style>
+</head>
+<body>
+    <div class="computer-frame" id="mainFrame">
+        <div id="clock">00:00:00</div>
+        <div id="direction">---</div>
+        <div class="line-info">-</div>
+        <div class="vehicle-info">---</div>
+        <div class="stop-count"><span id="curr-idx">0</span>/<span id="total-idx">0</span></div>
+        <div id="marker"></div>
+        
+        <div class="current-stop-container">
+            <p id="stop-name">NAČÍTAVAM...</p>
+            <p id="street-name">---</p>
+        </div>
+        
+        <div class="prev-stops">
+            <div class="stop-item" id="p2">-</div>
+            <div class="stop-item" id="p1">-</div>
+        </div>
+        
+        <div id="delay">+00:00</div>
+        
+        <div class="next-stops">
+            <div class="stop-item" id="n1">-</div>
+            <div class="stop-item" id="n2">-</div>
+        </div>
+
+        <!-- Tlačidlá -->
+        <div class="btn-overlay" style="top: 155px; left: 95px; width: 65px; height: 65px;" onclick="nasledujuciSpoj()"></div>
+        <div class="btn-overlay" style="top: 495px; left: 340px; width: 70px; height: 65px;" onclick="move(-1)"></div>
+        <div class="btn-overlay" style="top: 495px; left: 565px; width: 40px; height: 65px;" onclick="move(1)"></div>
+        <div class="btn-overlay" style="top: 495px; left: 630px; width: 155px; height: 70px;" onclick="logout()"></div>
+    </div>
+
+    <audio id="click-sound" src="zvuk1.wav" preload="auto"></audio>
+
+<script>
+    let cestovnyPoriadok = []; 
+    let indexSpoja = 0; 
+    let currentIndex = 0;
+    let aktivnySpoj, zastavky, startTime;
+
+    function autoScale() {
+        const frame = document.getElementById('mainFrame');
+        const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 667);
+        frame.style.transform = `scale(${scale})`;
+    }
+
+    window.addEventListener('resize', autoScale);
+    window.addEventListener('load', autoScale);
+
+    function pipni() {
+        const sound = document.getElementById('click-sound');
+        if (sound) { sound.currentTime = 0; sound.play().catch(() => {}); }
+    }
+
+function prihlasenie() {
+        // 1. KONTROLA DRUHÉHO (SEKUNDÁRNEHO) LOGU
+        const sekundarnyLog = localStorage.getItem('srg_sekundarny_log') || "";
+        
+        if (sekundarnyLog === "10") {
+            // Resetujeme sekundárny log, aby sa presmerovanie neopakovalo pri návrate
+            localStorage.setItem('srg_sekundarny_log', '0');
+            // Presmerovanie na obrazovku meškania
+            window.location.href = "r.spoja.html";
+            return; // Ukončíme funkciu, aby sa nenačítaval zvyšok
+        }
+
+        // 2. PÔVODNÁ LOGIKA NAČÍTANIA KURZU
+        const srgLog = localStorage.getItem('srg_log') || "";
+        const ulozenaJazda = localStorage.getItem('aktivna_jazda');
+
+        // Ak máme uloženú konkrétnu jazdu z volba_4, načítame ju prioritne
+        if (ulozenaJazda) {
+            const data = JSON.parse(ulozenaJazda);
+            aktivnySpoj = data.spoj;
+            currentIndex = data.startIndex || 0;
+            zastavky = aktivnySpoj.t;
+            
+            // Nastavenie vozidla z databázy podľa kurzu v srgLog
+            const casti = srgLog.split('.');
+            const kurzKey = casti[1];
+            if (kurzKey && databazaCP[kurzKey]) {
+                document.querySelector('.vehicle-info').innerText = databazaCP[kurzKey].vozidlo || "803";
+            }
+
+            document.getElementById('total-idx').innerText = zastavky.length - 1;
+            
+            const [h, m] = aktivnySpoj.odchod.split(':');
+            startTime = new Date();
+            startTime.setHours(parseInt(h), parseInt(m), 0, 0);
+            
+            updateDisplay();
+        } 
+        // Záložné načítanie kurzu (ak by nebola aktivna_jazda)
+        else if (srgLog.startsWith('7.')) {
+            const casti = srgLog.split('.');
+            const kurzKey = casti[1]; 
+            const denKey = casti[2];  
+
+            if (typeof databazaCP !== 'undefined' && databazaCP[kurzKey] && databazaCP[kurzKey][denKey]) {
+                cestovnyPoriadok = databazaCP[kurzKey][denKey];
+                document.querySelector('.vehicle-info').innerText = databazaCP[kurzKey].vozidlo || "803";
+                nacitajDataSpoja();
+            }
+        }
+        
+        autoScale();
+    }
+
+    function nacitajDataSpoja() {
+        if (cestovnyPoriadok.length === 0) return;
+        
+        aktivnySpoj = cestovnyPoriadok[indexSpoja];
+        zastavky = aktivnySpoj.t; 
+        currentIndex = 0;
+
+        document.getElementById('total-idx').innerText = zastavky.length - 1;
+
+        const [h, m] = aktivnySpoj.odchod.split(':');
+        startTime = new Date();
+        startTime.setHours(parseInt(h), parseInt(m), 0, 0);
+        
+        updateDisplay();
+    }
+
+    function updateDisplay() {
+        if (!zastavky || zastavky.length === 0) return;
+        const current = zastavky[currentIndex];
+        
+        document.getElementById('direction').innerText = aktivnySpoj.smer;
+        document.getElementById('stop-name').innerText = current.n;
+        document.getElementById('street-name').innerText = current.u || "";
+        document.querySelector('.line-info').innerText = aktivnySpoj.L;
+        document.getElementById('curr-idx').innerText = currentIndex;
+        
+        document.getElementById('p1').innerText = currentIndex > 0 ? zastavky[currentIndex - 1].n : "-------";
+        document.getElementById('p2').innerText = currentIndex > 1 ? zastavky[currentIndex - 2].n : "-------";
+        document.getElementById('n1').innerText = currentIndex < zastavky.length - 1 ? zastavky[currentIndex + 1].n : "-------";
+        document.getElementById('n2').innerText = currentIndex < zastavky.length - 2 ? zastavky[currentIndex + 2].n : "-------";
+        
+        let maxIdx = zastavky.length - 1;
+        let step = maxIdx > 0 ? (620 / maxIdx) : 0;
+        document.getElementById('marker').style.left = (170 + (currentIndex * step)) + "px";
+        
+        updateDelay();
+    }
+
+function nasledujuciSpoj() {
+    pipni();
+    
+    // 1. Získame dáta o aktuálnej jazde
+    const ulozenaJazda = localStorage.getItem('aktivna_jazda');
+    
+    if (ulozenaJazda) {
+        const data = JSON.parse(ulozenaJazda);
+        const spoj = data.spoj; // Objekt spoja
+        
+        // 2. Získame kurz a deň (ak ich nemáme priamo v objekte, skúsime ich vytiahnuť z logu)
+        // Predpokladáme, že srg_log má formát "7.KURZ.DEN"
+        const staryLog = localStorage.getItem('srg_log');
+        
+        if (staryLog && staryLog.startsWith('7.')) {
+            // Ak je log v poriadku, proste ho tam necháme a len presmerujeme
+            // Prípadne ho explicitne nastavíme, aby sme mali istotu
+            localStorage.setItem('srg_log', staryLog);
+        }
+    }
+
+    // 3. Presmerovanie na výber (kde init() v spoj.volba_4.html načíta kurz z logu)
+    setTimeout(() => {
+        window.location.href = "spoj.volba_4.html";
+    }, 200);
+}
+        
+    function move(dir) {
+        pipni();
+        let novyIndex = currentIndex + dir;
+        if (novyIndex >= 0 && novyIndex < zastavky.length) {
+            currentIndex = novyIndex;
+            updateDisplay();
+        }
+    }
+
+function updateDelay() {
+        if (!startTime || !zastavky) return;
+        const now = new Date();
+        const plannedTime = new Date(startTime.getTime() + (zastavky[currentIndex].min || 0) * 60000);
+        
+        // Výpočet rozdielu v sekundách
+        let diffMs = plannedTime - now;
+        let diffSec = Math.floor(diffMs / 1000);
+
+        // --- PRESNÁ PODMIENKA: Ak je čas presne 00:00 na prvej zastávke ---
+        if (currentIndex === 0 && diffSec === 0) {
+            window.location.href = "r.spoja.html";
+            return;
+        }
+
+        let absDiff = Math.abs(diffMs);
+        let m = Math.floor(absDiff / 60000);
+        let s = Math.floor((absDiff % 60000) / 1000);
+        
+        const delayEl = document.getElementById('delay');
+        let sign = diffMs < 0 ? "-" : "+";
+        delayEl.innerText = sign + String(m).padStart(2,'0') + ":" + String(s).padStart(2,'0');
+        
+        if (diffMs > 0) {
+            delayEl.style.color = (now.getSeconds() % 2 === 0) ? "#ffffff" : "#ff0000";
+        } else {
+            delayEl.style.color = "#ffffff";
+        }
+    }
+
+    function logout() {
+        pipni();
+        localStorage.setItem('srg_log', '3');
+        setTimeout(() => { window.location.href = "menu_poprihlas.html"; }, 200);
+    }
+
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('sk-SK');
+        updateDelay();
+    }, 1000);
+
+    window.onload = prihlasenie;
+</script>
+</body>
+</html>

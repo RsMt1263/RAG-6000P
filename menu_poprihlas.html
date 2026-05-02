@@ -3,99 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SRG-6000P Simulátor - Menu</title>
+    <title>SRG-6000P Simulátor - Menu (Prihlásený)</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-            color: white;
-            touch-action: manipulation;
-        }
-
-        .monitor-container {
-            position: relative;
+        body { margin: 0; padding: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: Arial, sans-serif; font-weight: bold; color: white; touch-action: manipulation; }
+        
+        .monitor-container { 
+            position: relative; 
             width: 1000px; 
             height: 650px; 
-            background: url('6000_boot0_1.png') no-repeat center center;
-            background-size: contain;
-            flex-shrink: 0;
+            background: url('6000_boot0_1.png') no-repeat center center; 
+            background-size: contain; 
+            flex-shrink: 0; 
         }
 
-        .menu-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('6000_menu_poprihlas.png') no-repeat center center;
-            background-size: contain;
-            pointer-events: none;
-            z-index: 5;
-            transition: background 0.3s;
+        .menu-layer { 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: url('6000_menu_poprihlas.png') no-repeat center center; 
+            background-size: contain; 
+            pointer-events: none; 
+            z-index: 5; 
         }
 
-        /* TLAČIDLO VYPNUTIA */
-        #tlacidlo-vypnut {
-            position: absolute;
-            right: 60px;   
-            top: 60px;
-            width: 65px;  
-            height: 55px; 
-            cursor: pointer;
-            z-index: 999;
-            background: rgba(255, 255, 255, 0); 
-        }
+        /* TLAČIDLÁ */
+        .btn-touch { position: absolute; cursor: pointer; z-index: 999; background: rgba(255, 255, 255, 0); }
+        #tlacidlo-vypnut { right: 60px; top: 60px; width: 65px; height: 55px; }
+        #tlacidlo-prihlasit { right: 61px; top: 207px; width: 60px; height: 55px; }
+        #tlacidlo-spoj { left: 108px; top: 86px; width: 60px; height: 120px; }
 
-        /* TLAČIDLO PRIHLÁSENIA */
-        #tlacidlo-prihlasit {
-            position: absolute;
-            right: 61px;   
-            top: 207px;
-            width: 60px;   
-            height: 55px; 
-            cursor: pointer;
-            z-index: 999;
-            background: rgba(255, 255, 255, 0); 
-        }
-
-        /* ČERVENÉ TLAČIDLO SPOJ */
-        #tlacidlo-spoj {
-            position: absolute;
-            left: 108px;      
-            top: 86px;      
-            width: 60px;      
-            height: 120px;    
-            cursor: pointer;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.0); 
-        }
-
+        /* TEXTOVÉ ÚDAJE */
         .cas-box { position: absolute; left: 195px; top: 175px; z-index: 10; pointer-events: none; }
         .cas { font-size: 85px; margin: 0; letter-spacing: 2px; }
         .ostatne-udaje { position: absolute; left: 210px; top: 275px; text-align: left; z-index: 10; pointer-events: none; }
-        .den { font-size: 48px; margin: 0; }
-        .datum { font-size: 48px; margin: 5px 0; }
+        .den, .datum { font-size: 48px; margin: 0; }
         .vozidlo { font-size: 32px; margin-top: 15px; }
         .status-box { position: absolute; right: 255px; top: 310px; border: 3px solid #555; padding: 8px 15px; color: #ff7b00; font-size: 32px; border-radius: 5px; background: rgba(0,0,0,0.7); z-index: 10; pointer-events: none; }
+
+        /* VRSTVA PRE ČIP (Odhlasovanie) */
+        #cip-overlay { 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: transparent; 
+            display: none; 
+            z-index: 2000; 
+            pointer-events: none;
+        }
+
+        #cip-img {
+            position: absolute;
+            width: 83px;
+            height: 170px;
+            /* Posun doprava k čítačke */
+            left: 89.5%; 
+            /* Posun výšky, aby hlava sedela na kruhu */
+            top: 45%; 
+            transform: translate(-50%, -50%); 
+            filter: drop-shadow(5px 5px 15px rgba(0,0,0,0.7));
+        }
     </style>
 </head>
 <body>
-    
+
+    <!-- ZVUKY -->
+    <audio id="beepSound" src="6000_beep.wav" preload="auto"></audio>
+    <audio id="beepSoundSuccess" src="6000_beep2.wav" preload="auto"></audio>
+
     <div class="monitor-container" id="mainFrame">
-        <div class="menu-layer" id="layerMenu"></div>
+        <!-- Overlay pre čip -->
+        <div id="cip-overlay">
+            <img src="cip.png" id="cip-img">
+        </div>
+
+        <div class="menu-layer"></div>
         
-        <div id="tlacidlo-vypnut" onclick="checkTripleClick()"></div>
-        <div id="tlacidlo-prihlasit" onclick="prihlasit()"></div>
-        
-        <div id="tlacidlo-spoj" onclick="akciaSpoj()"></div>
+        <div id="tlacidlo-vypnut" class="btn-touch" onclick="checkTripleClick()"></div>
+        <div id="tlacidlo-prihlasit" class="btn-touch" onclick="handleLogout()"></div>
+        <div id="tlacidlo-spoj" class="btn-touch" onclick="akciaSpoj()"></div>
 
         <div class="cas-box">
             <div id="hodiny" class="cas">00:00:00</div>
@@ -111,50 +96,89 @@
     </div>
 
     <script>
-    // 1. KONTROLA STAVU
-    if (localStorage.getItem('srg_log') !== '3') {
-        localStorage.clear();
-        window.location.href = "index.html";
-    }
-
-    function akciaSpoj() {
-        // Pri kliknutí sa status zmení na 4 pre ďalšiu stránku
-        localStorage.setItem('srg_log', '4'); 
-        window.location.href = "spoj.volba_1.html"; 
-    }
-
-    function zvacsiPanel() {
+        const snd = document.getElementById('beepSound');
+        const snd2 = document.getElementById('beepSoundSuccess');
         const frame = document.getElementById('mainFrame');
-        const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 650);
-        frame.style.transform = `scale(${scale})`;
-        frame.style.transformOrigin = 'center center';
-    }
+        const cipOverlay = document.getElementById('cip-overlay');
 
-    window.onload = () => { zvacsiPanel(); aktualizujCas(); };
-    window.onresize = zvacsiPanel;
+        // --- 1. STRIKTNÁ KONTROLA STAVU 3 ---
+        if (localStorage.getItem('srg_log') !== '3') {
+            localStorage.clear();
+            window.location.href = "index.html";
+        } else {
+            localStorage.removeItem('srg_log');
+        }
 
-    let clickCount = 0;
-    let clickTimer;
-    function checkTripleClick() {
-        clickCount++;
-        if (clickCount === 1) { clickTimer = setTimeout(() => { clickCount = 0; }, 1500); }
-        if (clickCount === 3) { window.location.href = "index.html"; }
-    }
+        function playBeep() {
+            if (snd) { snd.currentTime = 0; snd.play().catch(e => {}); }
+        }
 
-    function aktualizujCas() {
-        const teraz = new Date();
-        const dni = ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota'];
-        const h = String(teraz.getHours()).padStart(2, '0');
-        const m = String(teraz.getMinutes()).padStart(2, '0');
-        const s = String(teraz.getSeconds()).padStart(2, '0');
-        document.getElementById('hodiny').textContent = h + ":" + m + ":" + s;
-        document.getElementById('den_v_tyzdni').textContent = dni[teraz.getDay()];
-        const rok = teraz.getFullYear();
-        const mesiac = String(teraz.getMonth() + 1).padStart(2, '0');
-        const den = String(teraz.getDate()).padStart(2, '0');
-        document.getElementById('datum_dnes').textContent = rok + "-" + mesiac + "-" + den;
-    }
-    setInterval(aktualizujCas, 1000);
+        function playBeep2() {
+            if (snd2) { snd2.currentTime = 0; snd2.play().catch(e => {}); }
+        }
+
+        // --- AKCIA SPOJ (Upravené s pípnutím a oneskorením) ---
+        function akciaSpoj() {
+            playBeep(); // Pípne
+            localStorage.setItem('srg_log', '4'); // Nastaví stav 4
+            
+            // Počká 1 sekundu a potom presmeruje
+            setTimeout(() => {
+                window.location.href = "spoj.volba_1.html"; 
+            }, 500);
+        }
+
+        // --- ODHLÁSENIE (ČIP) ---
+        function handleLogout() {
+            playBeep(); 
+            cipOverlay.style.display = 'block';
+
+            setTimeout(() => {
+                playBeep2();
+            }, 3000);
+
+            setTimeout(() => {
+                localStorage.setItem('srg_log', '1'); 
+                window.location.href = "menu.html";
+            }, 6000);
+        }
+
+        // --- VYPNUTIE (3-KLIK) ---
+        let clickCount = 0;
+        let clickTimer;
+        function checkTripleClick() {
+            playBeep();
+            clickCount++;
+            if (clickCount === 1) { 
+                clickTimer = setTimeout(() => { clickCount = 0; }, 1500); 
+            }
+            if (clickCount === 3) { 
+                localStorage.clear();
+                window.location.href = "index.html"; 
+            }
+        }
+
+        // --- HODINY A ŠKÁLOVANIE ---
+        function aktualizujCas() {
+            const teraz = new Date();
+            const dni = ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota'];
+            document.getElementById('hodiny').textContent = teraz.toLocaleTimeString('sk-SK');
+            document.getElementById('den_v_tyzdni').textContent = dni[teraz.getDay()];
+            document.getElementById('datum_dnes').textContent = teraz.toISOString().split('T')[0];
+        }
+
+        function zvacsiPanel() {
+            const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 650);
+            frame.style.transform = `scale(${scale})`;
+            frame.style.transformOrigin = 'center center';
+        }
+
+        window.onload = () => { 
+            zvacsiPanel(); 
+            aktualizujCas(); 
+            setInterval(aktualizujCas, 1000); 
+        };
+        window.onresize = zvacsiPanel;
     </script>
 </body>
 </html>

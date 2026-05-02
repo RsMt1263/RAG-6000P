@@ -79,6 +79,7 @@
             cursor: pointer;
             bottom: 90px;
             height: 125px;
+            background: transparent;
         }
 
         #btn-spat { left: 142px; width: 125px; }
@@ -86,11 +87,20 @@
         #btn-vpred { left: 465px; width: 185px; }
         #btn-ok { left: 655px; width: 125px; }
 
+        #tlacidlo-vypnut { 
+            position: absolute; right: 55px; top: 55px; 
+            width: 75px; height: 65px; 
+            z-index: 1001; cursor: pointer; 
+        }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
+
+    <audio id="beepSound" src="6000_beep.wav" preload="auto"></audio>
 
     <div class="monitor-container" id="mainFrame">
+        <div id="tlacidlo-vypnut" onclick="checkTripleClick()"></div>
+
         <div id="vyber-info-hore">---</div>
         <div id="vypis-smer">---</div>
         <div id="vypis-zastavka">---</div>
@@ -106,35 +116,46 @@
     let indexSpoja = 0;
     let vsetkySpoje = [];
     let zvolenySpoj = null;
+    const snd = document.getElementById('beepSound');
 
     const srgLog = localStorage.getItem('srg_log') || "";
-
     if (!srgLog.startsWith('7.')) {
         localStorage.clear();
         window.location.href = "index.html";
     }
 
-    localStorage.removeItem('vybrane_poradie');
+    window.onbeforeunload = function() { return "Zmeny nebudú uložené."; };
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) e.preventDefault();
+    });
+
+    function playBeep() {
+        if (snd) { snd.currentTime = 0; snd.play().catch(e => {}); }
+    }
 
     function init() {
-        const srgLog = localStorage.getItem('srg_log') || "";
-        if (!srgLog.startsWith('7.')) return;
+        const parts = srgLog.split('.');
+        if (parts.length < 3) return;
 
-        const casti = srgLog.split('.');
-        const kurzRaw = casti[1]; 
-        const den = casti[2];     
+        const kurzRaw = parts[1]; 
+        const den = parts[2];     
 
-        const kurzFormat = '"' + kurzRaw.substring(0, 3) + "/" + kurzRaw.substring(3) + '"';
-        document.getElementById('vyber-info-hore').innerText = kurzFormat + " " + den;
+        // ÚPRAVA: Pridanie úvodzoviek okolo kurzu (napr. "114/2")
+        const l = kurzRaw.length;
+        const kurzDisplay = '"' + kurzRaw.substring(0, l-1) + "/" + kurzRaw.substring(l-1) + '"';
+        
+        document.getElementById('vyber-info-hore').innerText = kurzDisplay + " " + den;
 
-        if (databazaCP[kurzRaw] && databazaCP[kurzRaw][den]) {
+        if (typeof databazaCP !== 'undefined' && databazaCP[kurzRaw] && databazaCP[kurzRaw][den]) {
             vsetkySpoje = databazaCP[kurzRaw][den];
             zvolenySpoj = vsetkySpoje[indexSpoja]; 
             aktualizujZobrazenie();
+        } else {
+            document.getElementById('vypis-smer').innerText = "DATA ERROR";
         }
     }
 
-function aktualizujZobrazenie() {
+    function aktualizujZobrazenie() {
         if (!zvolenySpoj) return;
 
         const prvaZastavka = zvolenySpoj.t[0];
@@ -147,16 +168,14 @@ function aktualizujZobrazenie() {
         let m = celkoveMinuty % 60;
         let casZastavky = String(h).padStart(2, '0') + ":" + String(m).padStart(2, '0');
 
-        // UPRAVENÉ: Začíname od 0 a celkový počet je znížený o 1
-        // Ak má pole dĺžku 22, vypíše to 0/21
         let pocetZastavokPreVypis = zvolenySpoj.t.length - 1;
 
         document.getElementById('pocitadlo-vypis').innerText = 
             `0/${pocetZastavokPreVypis} (${casZastavky})`;
     }
 
-    // Prepínanie spojov v rámci kurzu
     function zmenSpoj(smer) {
+        playBeep();
         let novyIndex = indexSpoja + smer;
         if (novyIndex >= 0 && novyIndex < vsetkySpoje.length) {
             indexSpoja = novyIndex;
@@ -166,12 +185,17 @@ function aktualizujZobrazenie() {
     }
 
     function istNaspät() {
+        window.onbeforeunload = null;
+        playBeep();
         localStorage.setItem('srg_log', '4');
-        window.location.href = "spoj.volba_1.html";
+        setTimeout(() => { window.location.href = "spoj.volba_1.html"; }, 300);
     }
 
     function potvrditDoJazdy() {
         if (zvolenySpoj) {
+            window.onbeforeunload = null;
+            playBeep();
+            
             const now = new Date();
             const [h_spoj, m_spoj] = zvolenySpoj.odchod.split(':').map(Number);
             const casOdchodu = new Date();
@@ -185,10 +209,23 @@ function aktualizujZobrazenie() {
 
             const dataJazdy = {
                 spoj: zvolenySpoj,
-                startIndex: 0 // Začíname vždy od nuly
+                startIndex: 0 
             };
             localStorage.setItem('aktivna_jazda', JSON.stringify(dataJazdy));
-            window.location.href = "6000-spoj.html";
+            setTimeout(() => { window.location.href = "6000-spoj.html"; }, 1500);
+        }
+    }
+
+    let clickCount = 0;
+    let clickTimer;
+    function checkTripleClick() {
+        playBeep();
+        clickCount++;
+        if (clickCount === 1) { clickTimer = setTimeout(() => { clickCount = 0; }, 1500); }
+        if (clickCount === 3) { 
+            window.onbeforeunload = null;
+            localStorage.clear();
+            window.location.href = "index.html"; 
         }
     }
 

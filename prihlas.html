@@ -5,190 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>SRG-6000P - Prihlásenie</title>
     <style>
-        body {
-            margin: 0; padding: 0; background-color: #000;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; overflow: hidden; font-family: Arial, sans-serif;
-            font-weight: bold; color: white; touch-action: manipulation;
-        }
+        body { margin: 0; padding: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: Arial, sans-serif; font-weight: bold; color: white; touch-action: manipulation; }
+        .monitor-container { position: relative; width: 1000px; height: 650px; background: url('6000_prihlas_okno.png') no-repeat center center; background-size: contain; flex-shrink: 0; }
+        
+        .btn-touch { position: absolute; z-index: 100; cursor: pointer; background: rgba(0,0,0,0); }
+        #tlacidlo-spat { left: 105px; top: 74px; width: 60px; height: 60px; }
+        #tlacidlo-vypnut { right: 60px; top: 55px; width: 65px; height: 60px; }
+        #tlacidlo-potvrdit { right: 239px; top: 305px; width: 210px; height: 70px; }
 
-        .monitor-container {
-            position: relative; width: 1000px; height: 650px;
-            background: url('6000_prihlas_okno.png') no-repeat center center;
-            background-size: contain; flex-shrink: 0;
-        }
-
-        /* TLAČIDLO ZRUŠIŤ / NÁVRAT */
-        #tlacidlo-spat {
-            position: absolute; 
-            left: 105px; 
-            top: 74px;
-            width: 60px; 
-            height: 60px; 
-            z-index: 100; 
-            cursor: pointer
-        }
-
-        /* TLAČIDLO VYPNÚŤ - ZVÝRAZNENÉ */
-        #tlacidlo-vypnut {
-            position: absolute; right: 60px; top: 55px;
-            width: 65px; height: 60px; cursor: pointer; z-index: 100;
-        }
-
-        /* BOX PRE ČÍSLO - ZVÝRAZNENÝ */
-        #box-cislo {
-            position: absolute; left: 115px; top: 230px;
-            width: 268px; height: 60px; z-index: 100;
-            display: flex; align-items: center;
-        }
-
-        /* BOX PRE HESLO - ZVÝRAZNENÝ */
-        #box-heslo {
-            position: absolute; left: 115px; top: 369px;
-            width: 268px; height: 60px; z-index: 100;
-            display: flex; align-items: center;
-        }
-
-        /* TLAČIDLO POTVRDIŤ - ZVÝRAZNENÉ */
-        #tlacidlo-potvrdit {
-            position: absolute; right: 239px; top: 305px;
-            width: 210px; height: 70px; z-index: 100; cursor: pointer;
-        }
-
-        /* HODINY - VEĽKOSŤ 110px */
-        #hodiny-prihlas {
-            position: absolute; right: 250px; top: 190px;
-            font-size: 70px; color: white; z-index: 100;    
-        }
-
-        /* BIELY TEXT V DOLNEJ ČASTI */
-        #vypis-meno {
-            position: absolute; 
-            left: 64%; 
-            bottom: 75px;
-            transform: translateX(-50%);
-            width: 100%; 
-            text-align: left;
-            font-size: 25px;
-            z-index: 110;
-            color: white !important;
-        }
-
-        @keyframes blikanie {
-            0% { background: rgba(255, 0, 0, 0.1); }
-            50% { background: rgba(255, 0, 0, 0.4); }
-            100% { background: rgba(255, 0, 0, 0.1); }
-        }
-
+        .input-box { position: absolute; left: 115px; width: 268px; height: 60px; z-index: 100; display: flex; align-items: center; }
+        #box-cislo { top: 230px; }
+        #box-heslo { top: 369px; }
         input { background: transparent; border: none; color: white; outline: none; width: 100%; text-align: center; font-size: 40px; font-weight: bold; }
+
+        #hodiny-prihlas { position: absolute; right: 250px; top: 190px; font-size: 70px; z-index: 100; }
+        #vypis-meno { position: absolute; left: 50%; bottom: 75px; transform: translateX(-50%); width: 80%; text-align: center; font-size: 25px; z-index: 110; color: white; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
+    <audio id="beepSound" src="6000_beep.wav" preload="auto"></audio>
+    <audio id="beepSoundSuccess" src="6000_beep2.wav" preload="auto"></audio>
+
     <div class="monitor-container" id="mainFrame">
-<div id="tlacidlo-spat" onclick="localStorage.setItem('srg_log', '1'); window.location.href='menu.html'"></div>
-        <div id="tlacidlo-vypnut" onclick="vypnutSystem()"></div>
+        <div id="tlacidlo-spat" class="btn-touch" onclick="handleBack()"></div>
+        <div id="tlacidlo-vypnut" class="btn-touch" onclick="handleExit()"></div>
+        <div id="tlacidlo-potvrdit" class="btn-touch" onclick="spustitOverenie()"></div>
+
         <div id="hodiny-prihlas">00:00:00</div>
 
-        <div id="box-cislo">
-            <input type="text" id="driver-id" autocomplete="off">
+        <div id="box-cislo" class="input-box">
+            <input type="text" id="driver-id" autocomplete="off" onfocus="playBeep()">
         </div>
-        <div id="box-heslo">
-            <input type="text" id="driver-pin" oninput="maskovanieHesla(this)" autocomplete="off">
+        <div id="box-heslo" class="input-box">
+            <input type="text" id="driver-pin" oninput="maskovanieHesla(this)" onfocus="playBeep()" autocomplete="off">
         </div>
 
-        <div id="tlacidlo-potvrdit" onclick="spustitOverenie()"></div>
         <div id="vypis-meno"></div>
     </div>
 
-<script>
-        // Bezpečnostná poistka
-    if (localStorage.getItem('srg_log') !== '2') {
-        localStorage.clear();
-        window.location.href = "index.html";
-    }
-    // HODINY
-    function aktualizujHodiny() {
-        const teraz = new Date();
-        const h = String(teraz.getHours()).padStart(2, '0');
-        const m = String(teraz.getMinutes()).padStart(2, '0');
-        const s = String(teraz.getSeconds()).padStart(2, '0');
-        document.getElementById('hodiny-prihlas').textContent = h + ":" + m + ":" + s;
-    }
-    setInterval(aktualizujHodiny, 1000);
-    aktualizujHodiny();
-
-    // MASKOVANIE HESLA
-    let realneHeslo = "";
-    function maskovanieHesla(input) {
-        let hodnota = input.value;
-        if (hodnota.length > realneHeslo.length) {
-            realneHeslo += hodnota.slice(-1);
-        } else {
-            realneHeslo = realneHeslo.substring(0, hodnota.length);
-        }
-        setTimeout(() => { input.value = "*".repeat(realneHeslo.length); }, 500);
-    }
-
-    const users = [
-        { id: "999", pin: "0000", meno: "Admin" },
-        { id: "001", pin: "126316", meno: "RsMt1263" },
-        { id: "003", pin: "281209", meno: "Petik_Plays" },
-        { id: "005", pin: "221465", meno: "Helocz 72" }
-    ];
-
-    let prebiehaOverovanie = false;
-
-    // OVEROVANIE
-    function spustitOverenie() {
-        if (prebiehaOverovanie) return;
-
-        const idVal = document.getElementById('driver-id').value;
-        const vypis = document.getElementById('vypis-meno');
-
-        if (!idVal || !realneHeslo) {
-            vypis.textContent = "ZADAJ ÚDAJE";
-            return;
-        }
-
-        prebiehaOverovanie = true;
-        vypis.textContent = "Prihlasujem...";
-
-        // Náhodný čas 3 až 7 sekúnd
-        const nahodnyCas = Math.floor(Math.random() * 4001) + 3000;
-
-        setTimeout(() => {
-            const najdeny = users.find(u => u.id === idVal && u.pin === realneHeslo);
-            
-            if (najdeny) {
-                vypis.textContent = "Prihlásený ako " + najdeny.meno + ".";
-                localStorage.setItem('srg_log', '3');
-                setTimeout(() => { window.location.href = "menu_poprihlas.html"; }, 2000);
-            } else {
-                vypis.textContent = "Chybné údaje.";
-                prebiehaOverovanie = false;
-                realneHeslo = "";
-                document.getElementById('driver-pin').value = "";
-            }
-        }, nahodnyCas);
-    }
-
-    // VYPNUTIE
-    let clicks = 0;
-    function vypnutSystem() {
-        clicks++;
-        if (clicks === 3) window.location.href = "index.html";
-        setTimeout(() => { clicks = 0; }, 1000);
-    }
-
-    // ŠKÁLOVANIE
-    function zvacsi() {
+    <script src="login.js"></script>
+    <script>
+        const snd = document.getElementById('beepSound');
+        const sndSuccess = document.getElementById('beepSoundSuccess');
         const frame = document.getElementById('mainFrame');
-        const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 650);
-        frame.style.transform = `scale(${scale})`;
-        frame.style.transformOrigin = 'center center';
-    }
-    window.onload = zvacsi; window.onresize = zvacsi;
-</script>
+
+        if (localStorage.getItem('srg_log') !== '2') {
+            localStorage.clear();
+            window.location.href = "index.html"; 
+        } else {
+            localStorage.removeItem('srg_log');
+        }
+
+        function playBeep() {
+            if (snd) { snd.currentTime = 0; snd.play().catch(e => {}); }
+        }
+
+        function playSuccessBeep() {
+            if (sndSuccess) { sndSuccess.currentTime = 0; sndSuccess.play().catch(e => {}); }
+        }
+
+        function handleBack() {
+            playBeep(); // Prehrá zvuk
+            
+            // Nastavíme stav pre menu.html
+            localStorage.setItem('srg_log', '1'); 
+
+            // Počká 1000 milisekúnd (1 sekundu) a potom presmeruje
+            setTimeout(() => {
+                window.location.href = 'menu.html';
+            }, 1000);
+        }
+
+        let clicks = 0;
+        function handleExit() {
+            playBeep();
+            clicks++;
+            if (clicks === 3) {
+                localStorage.clear();
+                window.location.href = "index.html";
+            }
+            setTimeout(() => { clicks = 0; }, 3000);    
+        }
+
+        function aktualizujHodiny() {
+            const teraz = new Date();
+            document.getElementById('hodiny-prihlas').textContent = 
+                teraz.getHours().toString().padStart(2, '0') + ":" + 
+                teraz.getMinutes().toString().padStart(2, '0') + ":" + 
+                teraz.getSeconds().toString().padStart(2, '0');
+        }
+
+        function zvacsi() {
+            const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 650);
+            frame.style.transform = `scale(${scale})`;
+            frame.style.transformOrigin = 'center center';
+        }
+
+        window.onload = () => { zvacsi(); aktualizujHodiny(); setInterval(aktualizujHodiny, 1000); };
+        window.onresize = zvacsi;
+    </script>
 </body>
-</html> 
+</html>

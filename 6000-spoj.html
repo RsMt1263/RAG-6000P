@@ -41,15 +41,59 @@
         .vehicle-info { position: absolute; top: 189.5px; right: 380px; font-size: 20px; color: #ffffff; }
         .stop-count { position: absolute; top: 213px; left: 280px; font-size: 20px; color: #ffffff; }
         
+        /* --- DYNAMICKÁ ČIARA --- */
+        .route-window {
+            position: absolute;
+            top: 298px;
+            left: 175px;
+            width: 650px;
+            height: 40px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        #route-slider {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            transition: left 0.4s ease-in-out;
+            height: 100%;
+            left: 0;
+        }
+
+        #actual-line {
+            position: absolute;
+            height: 10px;
+            background-color: #217a87;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+            border-radius: 5px;
+        }
+
+        .stop-dot {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background-color: #0a4a52;
+            border-radius: 50%;
+            border: 2px solid #000;
+            z-index: 2;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
         #marker {
             position: absolute;
             top: 267px;
-            left: 170px;
+            left: 175px;
             width: 0; height: 0;
             border-left: 12px solid transparent;
             border-right: 12px solid transparent;
             border-top: 22px solid #ffffff;
-            transition: left 0.5s ease;
+            transition: left 0.4s ease-in-out;
+            z-index: 20;
         }
 
         .current-stop-container { position: absolute; top: 343px; left: 75px; width: 785px; text-align: center; }
@@ -71,16 +115,26 @@
         }
 
         .btn-overlay { position: absolute; cursor: pointer; z-index: 10; }
+        #tlacidlo-vypnut { position: absolute; right: 55px; top: 55px; width: 75px; height: 65px; z-index: 1001; cursor: pointer; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
+
     <div class="computer-frame" id="mainFrame">
+        <div id="tlacidlo-vypnut" onclick="checkTripleClick()"></div>
+
         <div id="clock">00:00:00</div>
         <div id="direction">---</div>
         <div class="line-info">-</div>
         <div class="vehicle-info">---</div>
         <div class="stop-count"><span id="curr-idx">0</span>/<span id="total-idx">0</span></div>
         <div id="marker"></div>
+
+        <div class="route-window">
+            <div id="route-slider">
+                <div id="actual-line"></div>
+            </div>
+        </div>
         
         <div class="current-stop-container">
             <p id="stop-name">NAČÍTAVAM...</p>
@@ -99,74 +153,88 @@
             <div class="stop-item" id="n2">-</div>
         </div>
 
-        <!-- Tlačidlá -->
         <div class="btn-overlay" style="top: 155px; left: 95px; width: 65px; height: 65px;" onclick="nasledujuciSpoj()"></div>
         <div class="btn-overlay" style="top: 495px; left: 340px; width: 70px; height: 65px;" onclick="move(-1)"></div>
         <div class="btn-overlay" style="top: 495px; left: 565px; width: 40px; height: 65px;" onclick="move(1)"></div>
         <div class="btn-overlay" style="top: 495px; left: 630px; width: 155px; height: 70px;" onclick="logout()"></div>
     </div>
 
-    <audio id="click-sound" src="zvuk1.wav" preload="auto"></audio>
+    <audio id="click-sound" src="6000_beep.wav" preload="auto"></audio>
 
 <script>
     let cestovnyPoriadok = []; 
     let indexSpoja = 0; 
     let currentIndex = 0;
     let aktivnySpoj, zastavky, startTime;
+    const snd = document.getElementById('click-sound');
+
+    const viewportWidth = 650;
+    const centerPoint = viewportWidth / 2;
+    let dotSpacing = 160;
+
+    window.onbeforeunload = function() { return "Zmeny nebudú uložené."; };
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) e.preventDefault();
+    });
 
     function autoScale() {
         const frame = document.getElementById('mainFrame');
         const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 667);
         frame.style.transform = `scale(${scale})`;
+        frame.style.transformOrigin = 'center center';
     }
 
     window.addEventListener('resize', autoScale);
     window.addEventListener('load', autoScale);
 
     function pipni() {
-        const sound = document.getElementById('click-sound');
-        if (sound) { sound.currentTime = 0; sound.play().catch(() => {}); }
+        if (snd) { 
+            snd.currentTime = 0; 
+            snd.play().catch(() => {}); 
+        }
     }
 
-function prihlasenie() {
-        // 1. KONTROLA DRUHÉHO (SEKUNDÁRNEHO) LOGU
+    let clickCount = 0;
+    let clickTimer;
+    function checkTripleClick() {
+        pipni();
+        clickCount++;
+        if (clickCount === 1) { clickTimer = setTimeout(() => { clickCount = 0; }, 1500); }
+        if (clickCount === 3) { 
+            window.onbeforeunload = null;
+            localStorage.clear();
+            window.location.href = "index.html"; 
+        }
+    }
+
+    function prihlasenie() {
         const sekundarnyLog = localStorage.getItem('srg_sekundarny_log') || "";
         
         if (sekundarnyLog === "10") {
-            // Resetujeme sekundárny log, aby sa presmerovanie neopakovalo pri návrate
             localStorage.setItem('srg_sekundarny_log', '0');
-            // Presmerovanie na obrazovku meškania
+            window.onbeforeunload = null;
             window.location.href = "r.spoja.html";
-            return; // Ukončíme funkciu, aby sa nenačítaval zvyšok
+            return;
         }
 
-        // 2. PÔVODNÁ LOGIKA NAČÍTANIA KURZU
         const srgLog = localStorage.getItem('srg_log') || "";
         const ulozenaJazda = localStorage.getItem('aktivna_jazda');
 
-        // Ak máme uloženú konkrétnu jazdu z volba_4, načítame ju prioritne
         if (ulozenaJazda) {
             const data = JSON.parse(ulozenaJazda);
             aktivnySpoj = data.spoj;
             currentIndex = data.startIndex || 0;
             zastavky = aktivnySpoj.t;
             
-            // Nastavenie vozidla z databázy podľa kurzu v srgLog
             const casti = srgLog.split('.');
             const kurzKey = casti[1];
-            if (kurzKey && databazaCP[kurzKey]) {
+            if (kurzKey && typeof databazaCP !== 'undefined' && databazaCP[kurzKey]) {
                 document.querySelector('.vehicle-info').innerText = databazaCP[kurzKey].vozidlo || "803";
             }
 
-            document.getElementById('total-idx').innerText = zastavky.length - 1;
-            
-            const [h, m] = aktivnySpoj.odchod.split(':');
-            startTime = new Date();
-            startTime.setHours(parseInt(h), parseInt(m), 0, 0);
-            
+            initRoute();
             updateDisplay();
         } 
-        // Záložné načítanie kurzu (ak by nebola aktivna_jazda)
         else if (srgLog.startsWith('7.')) {
             const casti = srgLog.split('.');
             const kurzKey = casti[1]; 
@@ -178,74 +246,94 @@ function prihlasenie() {
                 nacitajDataSpoja();
             }
         }
-        
         autoScale();
     }
 
     function nacitajDataSpoja() {
         if (cestovnyPoriadok.length === 0) return;
-        
         aktivnySpoj = cestovnyPoriadok[indexSpoja];
         zastavky = aktivnySpoj.t; 
         currentIndex = 0;
-
-        document.getElementById('total-idx').innerText = zastavky.length - 1;
-
-        const [h, m] = aktivnySpoj.odchod.split(':');
-        startTime = new Date();
-        startTime.setHours(parseInt(h), parseInt(m), 0, 0);
-        
+        initRoute();
         updateDisplay();
+    }
+
+    function initRoute() {
+        const slider = document.getElementById('route-slider');
+        slider.innerHTML = '<div id="actual-line"></div>';
+        const line = document.getElementById('actual-line');
+        
+        if (zastavky.length > 1 && zastavky.length < 5) {
+            dotSpacing = viewportWidth / (zastavky.length - 1);
+        } else {
+            dotSpacing = 160;
+        }
+
+        zastavky.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.className = 'stop-dot';
+            dot.style.left = (i * dotSpacing) + "px";
+            slider.appendChild(dot);
+        });
+        
+        line.style.width = ((zastavky.length - 1) * dotSpacing) + "px";
+        line.style.left = "0px";
     }
 
     function updateDisplay() {
         if (!zastavky || zastavky.length === 0) return;
         const current = zastavky[currentIndex];
+        const slider = document.getElementById('route-slider');
+        const marker = document.getElementById('marker');
         
         document.getElementById('direction').innerText = aktivnySpoj.smer;
         document.getElementById('stop-name').innerText = current.n;
         document.getElementById('street-name').innerText = current.u || "";
         document.querySelector('.line-info').innerText = aktivnySpoj.L;
         document.getElementById('curr-idx').innerText = currentIndex;
+        document.getElementById('total-idx').innerText = zastavky.length - 1;
         
+        let stopX = currentIndex * dotSpacing;
+        let sliderLeft = 12;
+        let markerPos = 175 + stopX;
+        const totalRouteWidth = (zastavky.length - 1) * dotSpacing;
+
+        if (totalRouteWidth > viewportWidth) {
+            sliderLeft = centerPoint - stopX;
+            if (sliderLeft > 0) {
+                sliderLeft = 0;
+                markerPos = 175 + stopX;
+            } else if (sliderLeft < (viewportWidth - totalRouteWidth)) {
+                sliderLeft = viewportWidth - totalRouteWidth;
+                markerPos = 175 + (stopX + sliderLeft);
+            } else {
+                markerPos = 175 + centerPoint;
+            }
+        } else {
+            sliderLeft = 0;
+            markerPos = 175 + stopX;
+        }
+
+        slider.style.left = sliderLeft + "px";
+        marker.style.left = markerPos + "px";
+
         document.getElementById('p1').innerText = currentIndex > 0 ? zastavky[currentIndex - 1].n : "-------";
         document.getElementById('p2').innerText = currentIndex > 1 ? zastavky[currentIndex - 2].n : "-------";
         document.getElementById('n1').innerText = currentIndex < zastavky.length - 1 ? zastavky[currentIndex + 1].n : "-------";
         document.getElementById('n2').innerText = currentIndex < zastavky.length - 2 ? zastavky[currentIndex + 2].n : "-------";
         
-        let maxIdx = zastavky.length - 1;
-        let step = maxIdx > 0 ? (620 / maxIdx) : 0;
-        document.getElementById('marker').style.left = (170 + (currentIndex * step)) + "px";
-        
+        const [h, m] = aktivnySpoj.odchod.split(':');
+        startTime = new Date();
+        startTime.setHours(parseInt(h), parseInt(m), 0, 0);
+
         updateDelay();
     }
 
-function nasledujuciSpoj() {
-    pipni();
-    
-    // 1. Získame dáta o aktuálnej jazde
-    const ulozenaJazda = localStorage.getItem('aktivna_jazda');
-    
-    if (ulozenaJazda) {
-        const data = JSON.parse(ulozenaJazda);
-        const spoj = data.spoj; // Objekt spoja
-        
-        // 2. Získame kurz a deň (ak ich nemáme priamo v objekte, skúsime ich vytiahnuť z logu)
-        // Predpokladáme, že srg_log má formát "7.KURZ.DEN"
-        const staryLog = localStorage.getItem('srg_log');
-        
-        if (staryLog && staryLog.startsWith('7.')) {
-            // Ak je log v poriadku, proste ho tam necháme a len presmerujeme
-            // Prípadne ho explicitne nastavíme, aby sme mali istotu
-            localStorage.setItem('srg_log', staryLog);
-        }
+    function nasledujuciSpoj() {
+        pipni();
+        window.onbeforeunload = null;
+        setTimeout(() => { window.location.href = "spoj.volba_4.html"; }, 200);
     }
-
-    // 3. Presmerovanie na výber (kde init() v spoj.volba_4.html načíta kurz z logu)
-    setTimeout(() => {
-        window.location.href = "spoj.volba_4.html";
-    }, 200);
-}
         
     function move(dir) {
         pipni();
@@ -256,17 +344,16 @@ function nasledujuciSpoj() {
         }
     }
 
-function updateDelay() {
+    function updateDelay() {
         if (!startTime || !zastavky) return;
         const now = new Date();
         const plannedTime = new Date(startTime.getTime() + (zastavky[currentIndex].min || 0) * 60000);
         
-        // Výpočet rozdielu v sekundách
         let diffMs = plannedTime - now;
         let diffSec = Math.floor(diffMs / 1000);
 
-        // --- PRESNÁ PODMIENKA: Ak je čas presne 00:00 na prvej zastávke ---
         if (currentIndex === 0 && diffSec === 0) {
+            window.onbeforeunload = null;
             window.location.href = "r.spoja.html";
             return;
         }
@@ -288,6 +375,7 @@ function updateDelay() {
 
     function logout() {
         pipni();
+        window.onbeforeunload = null;
         localStorage.setItem('srg_log', '3');
         setTimeout(() => { window.location.href = "menu_poprihlas.html"; }, 200);
     }

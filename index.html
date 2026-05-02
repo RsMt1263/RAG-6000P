@@ -1,329 +1,103 @@
 <!DOCTYPE html>
-
 <html lang="sk">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-
     <title>SRG-6000P - Boot</title>
-
     <style>
-
-        body {
-
-            margin: 0;
-
-            padding: 0;
-
-            background-color: #000;
-
-            display: flex;
-
-            justify-content: center;
-
-            align-items: center;
-
-            height: 100vh;
-
-            overflow: hidden;
-
-            font-family: Arial, sans-serif;
-
-        }
-
-
-
-        /* Kontajner s rozmermi 1000x650 ako v menu.html */
-
-        .monitor-container {
-
-            position: relative;
-
-            width: 1000px;
-
-            height: 650px;
-
-            background: url('6000_boot0.png') no-repeat center center;
-
-            background-size: contain;
-
-            flex-shrink: 0;
-
-        }
-
-
-
-        /* Vrstva pre animáciu bootovania */
-
-        #boot-layer {
-
-            position: absolute;
-
-            top: 0;
-
-            left: 0;
-
-            width: 100%;
-
-            height: 100%;
-
-            background-size: contain;
-
-            background-repeat: no-repeat;
-
-            background-position: center;
-
-            pointer-events: none;
-
-        }
-
-
-
-        /* Tlačidlo zapnutia - súradnice z tvojho návrhu */
-
-        #power-button {
-
-            position: absolute;
-
-            right: 60px;  
-
-            top: 70px;
-
-            width: 65px;  
-
-            height: 55px;
-
-            cursor: pointer;
-
-            z-index: 20;
-
-            background: rgba(255, 0, 0, 0);
-
-        }
-
-
-
-
-
-        @keyframes blikanie { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.1; } }
-
+        body { margin: 0; padding: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: Arial, sans-serif; }
+        .monitor-container { position: relative; width: 1000px; height: 650px; background: url('6000_boot0.png') no-repeat center center; background-size: contain; flex-shrink: 0; }
+        #boot-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; pointer-events: none; }
+        #power-button { position: absolute; right: 60px; top: 70px; width: 65px; height: 55px; cursor: pointer; z-index: 20; background: rgba(255, 0, 0, 0); }
+        #power-hint { position: absolute; right: 60px; top: 130px; color: white; font-size: 14px; font-weight: bold; }
     </style>
-
 </head>
-
 <body>
-
-   
 
     <audio id="beepSound" src="6000_beep.wav" preload="auto"></audio>
 
-
-
     <div class="monitor-container" id="mainFrame">
-
         <div id="boot-layer"></div>
-
         <div id="power-button" onclick="startBoot()"></div>
-
-        <div id="power-hint">Zapnúť</div>
-
+        <div id="power-hint"></div>
     </div>
 
-
-
     <script>
-
         const snd = document.getElementById('beepSound');
+        const mainFrame = document.getElementById('mainFrame');
+        const bootLayer = document.getElementById('boot-layer');
 
+        // PREDNAČÍTANIE OBRÁZKOV PROTI BLIKANIU
+        const obrazky = [
+            "6000_boot0_1.png", "6000_boot1.png", "6000_boot2.png", "6000_boot3.png", 
+            "6000_boot4.png", "6000_boot5.png", "6000_boot6.png", "6000_boot7.png", 
+            "6000_boot8.png", "6000_boot9.png", "6000_boot10.png", "6000_boot11.png", "6000_boot12.png"
+        ];
 
-
-        // Funkcia na pípnutie
-
-        function beep() {
-
-            if (snd) {
-
-                snd.currentTime = 0;
-
-                snd.play().catch(e => console.log("Audio čaká na interakciu"));
-
-            }
-
+        function preload() {
+            obrazky.forEach(src => { const img = new Image(); img.src = src; });
         }
 
-
-
-        // Funkcia na prispôsobenie obrazovke tabletu
+        function beep() {
+            if (snd) {
+                snd.pause();
+                snd.currentTime = 0;
+                snd.play().catch(e => console.log("Audio Error"));
+            }
+        }
 
         function zvacsiPanel() {
-
             const frame = document.getElementById('mainFrame');
-
             const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 650);
-
             frame.style.transform = `scale(${scale})`;
-
             frame.style.transformOrigin = 'center center';
-
         }
 
-
-
-        window.onload = zvacsiPanel;
-
+        window.onload = () => { zvacsiPanel(); preload(); };
         window.onresize = zvacsiPanel;
 
-
-
-        function beep() {
-
-            if (snd) {
-
-                snd.pause();          // Zastaviť prebiehajúci zvuk
-
-                snd.currentTime = 0;  // Vrátiť na úplný začiatok
-
-               
-
-                // "load" vynúti prehliadač, aby na zvuk znova zaostril
-
-                snd.load();
-
-               
-
-                snd.play().catch(e => console.log("Chyba zvuku:", e));
-
-            }
-
-        }
-
-
-
         function startBoot() {
-
-            const mainFrame = document.getElementById('mainFrame');
-
-            const bootLayer = document.getElementById('boot-layer');
-
-           
-
-            // --- 3 PÍPNUTIA S REŠTARTOM ZVUKU ---
-
-            setTimeout(function() {
-
-                beep(); // 2. pípnutie po 0.4s
-
-            }, 1500);
-
-           
-
-           
-
-            setTimeout(function() {
-
-                beep(); // 2. pípnutie po 0.4s
-
-            }, 3000);
-
-           
-
-            setTimeout(function() {
-
-                beep(); // 3. pípnutie po 0.8s
-
-            }, 4500);
-
-            // ------------------------------------
-
-           
-
+            // Tvoje pípnutia
+            setTimeout(beep, 1500);
+            setTimeout(beep, 3000);
+            setTimeout(beep, 4500);
+            
             mainFrame.style.backgroundImage = "url('6000_boot0_1.png')";
-
             document.getElementById('power-hint').style.display = 'none';
-
             document.getElementById('power-button').style.pointerEvents = 'none';
 
-
-
-            setTimeout(function() {
-
-                spustiSekvenciu(bootLayer);
-
-            }, 10000);
-
+            // Po 10 sekundách začne sekvencia
+            setTimeout(spustiSekvenciu, 10000);
         }
 
-
-
-        function spustiSekvenciu(bootLayer) {
-
+        function spustiSekvenciu() {
             const poradie = [
-
                 "6000_boot1.png", "6000_boot2.png", "6000_boot3.png", "6000_boot4.png",
-
                 "6000_boot5.png", "6000_boot6.png", "6000_boot7.png",
-
                 "TMA", "6000_boot8.png", "TMA",
-
                 "6000_boot9.png", "6000_boot10.png", "6000_boot11.png", "6000_boot12.png",
-
                 "TMA"
-
             ];
 
-
-
             const casy = [1500, 1800, 1200, 1000, 2400, 500, 800, 1150, 5000, 1150, 2400, 1700, 3500, 4000, 1000];
-
             let i = 0;
 
-
-
             function cycle() {
-
                 if (i < poradie.length) {
-
-                    const nazov = poradie[i];
-
-
-
-                    if (nazov === "TMA") {
-
+                    if (poradie[i] === "TMA") {
                         bootLayer.style.backgroundImage = "none";
-
                     } else {
-
-                        bootLayer.style.backgroundImage = `url('${nazov}')`;
-
+                        bootLayer.style.backgroundImage = `url('${poradie[i]}')`;
                     }
-
-                   
-
                     setTimeout(cycle, casy[i]);
-
                     i++;
-
                 } else {
-
-    // Nastavíme prvú úroveň
-
-    localStorage.setItem('srg_log', '1');
-
-    window.location.href = "menu.html";
-
-}
-
+                    localStorage.setItem('srg_log', '1');
+                    window.location.href = "menu.html";
+                }
             }
-
             cycle();
-
         }
-
     </script>
-
 </body>
-
 </html>

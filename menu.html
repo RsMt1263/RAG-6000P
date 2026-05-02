@@ -5,87 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>SRG-6000P Simulátor - Menu</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-            color: white;
-            touch-action: manipulation;
-        }
-
-        .monitor-container {
-            position: relative;
+        body { margin: 0; padding: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: Arial, sans-serif; font-weight: bold; color: white; touch-action: manipulation; }
+        
+        .monitor-container { 
+            position: relative; 
             width: 1000px; 
             height: 650px; 
-            background: url('6000_boot0_1.png') no-repeat center center;
-            background-size: contain;
-            flex-shrink: 0;
+            background: url('6000_boot0_1.png') no-repeat center center; 
+            background-size: contain; 
+            flex-shrink: 0; 
         }
 
-        .menu-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('6000_menu_start.png') no-repeat center center;
-            background-size: contain;
-            pointer-events: none;
-            z-index: 5;
-            transition: background 0.3s;
+        .menu-layer { 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: url('6000_menu_start.png') no-repeat center center; 
+            background-size: contain; 
+            pointer-events: none; 
+            z-index: 5; 
         }
 
-        /* TLAČIDLO VYPNUTIA (Trojklik - vľavo hore) */
-        #tlacidlo-vypnut {
-            position: absolute;
-            right: 60px;   
-            top: 60px;
-            width: 65px;  
-            height: 55px; 
-            cursor: pointer;
-            z-index: 999;
-            background: rgba(255, 255, 255, 0); /* Jemný nádych, aby nezavadzalo */
-        }
+        /* TLAČIDLÁ */
+        .btn-touch { position: absolute; cursor: pointer; z-index: 999; background: rgba(255, 255, 255, 0); }
+        #tlacidlo-vypnut { right: 60px; top: 60px; width: 65px; height: 55px; }
+        #tlacidlo-prihlasit { right: 61px; top: 207px; width: 60px; height: 55px; }
 
-        /* TLAČIDLO PRIHLÁSENIA (To okrúhle, čo nastavujeme teraz) */
-        #tlacidlo-prihlasit {
-            position: absolute;
-            /* UPRAVUJ TIETO HODNOTY: */
-            right: 61px;   
-            top: 207px;
-            width: 60px;   
-            height: 55px; 
-            cursor: pointer;
-            z-index: 999;
-            background: rgba(255, 255, 255, 0); /* Jemný nádych, aby nezavadzalo */
-        }
-
-
-        /* --- Zvyšok štýlov (hodiny, údaje) zostáva rovnaký --- */
+        /* TEXTOVÉ ÚDAJE */
         .cas-box { position: absolute; left: 195px; top: 175px; z-index: 10; pointer-events: none; }
         .cas { font-size: 85px; margin: 0; letter-spacing: 2px; }
         .ostatne-udaje { position: absolute; left: 210px; top: 275px; text-align: left; z-index: 10; pointer-events: none; }
-        .den { font-size: 48px; margin: 0; }
-        .datum { font-size: 48px; margin: 5px 0; }
+        .den, .datum { font-size: 48px; margin: 0; }
         .vozidlo { font-size: 32px; margin-top: 15px; }
         .status-box { position: absolute; right: 255px; top: 310px; border: 3px solid #555; padding: 8px 15px; color: #ff7b00; font-size: 32px; border-radius: 5px; background: rgba(0,0,0,0.7); z-index: 10; pointer-events: none; }
+
+        /* VRSTVA PRE ČIP */
+        #cip-overlay { 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: transparent; 
+            display: none; 
+            z-index: 2000; 
+            pointer-events: none;
+        }
+
+        /* PRESNÉ DOPASOVANIE ČIPU NA PRAVÚ STRANU */   
+        #cip-img {
+            position: absolute;
+            width: 83px;
+            height: 170px;
+            /* Posun doprava k čítačke */
+            left: 89.5%; 
+            /* Posun výšky, aby hlava sedela na kruhu */
+            top: 45%; 
+            transform: translate(-50%, -50%); 
+            filter: drop-shadow(5px 5px 15px rgba(0,0,0,0.7));
+        }
     </style>
 </head>
 <body>
-    <div id="tlacidlo-prihlasit" onclick="prihlasit()"></div>
-    
+
+    <audio id="beepSound" src="6000_beep.wav" preload="auto"></audio>
+
     <div class="monitor-container" id="mainFrame">
-        <div class="menu-layer" id="layerMenu"></div>
+        <div id="cip-overlay">
+            <img src="cip.png" id="cip-img">
+        </div>
+
+        <div class="menu-layer"></div>
         
-        <div id="tlacidlo-vypnut" onclick="checkTripleClick()"></div>
-        <div id="tlacidlo-prihlasit" onclick="prihlasit()"></div>
+        <div id="tlacidlo-vypnut" class="btn-touch" onclick="handleExit()"></div>
+        <div id="tlacidlo-prihlasit" class="btn-touch" onclick="handleLogin()"></div>
 
         <div class="cas-box">
             <div id="hodiny" class="cas">00:00:00</div>
@@ -101,48 +92,67 @@
     </div>
 
     <script>
-    if (localStorage.getItem('srg_log') !== '1') {
-        localStorage.clear();
-        window.location.href = "index.html";
-    }
+        const snd = document.getElementById('beepSound');
+        const frame = document.getElementById('mainFrame');
+        const cipOverlay = document.getElementById('cip-overlay');
 
-        function prihlasit() {
-            localStorage.setItem('srg_log', '2'); // Posúvame na level 2
-            window.location.href = "prihlas.html";
+        // Kontrola prístupu
+        if (localStorage.getItem('srg_log') !== '1') {
+            localStorage.clear();
+            window.location.href = "index.html";
+        } else {
+            localStorage.removeItem('srg_log');
+        }
+
+        function playBeep() {
+            if (snd) { 
+                snd.currentTime = 0; 
+                snd.play().catch(e => {}); 
+            }
+        }
+
+        function handleLogin() {
+            cipOverlay.style.display = 'block';
+
+            // Pípnutie v 3. sekunde
+            setTimeout(() => {
+                playBeep();
+            }, 3000);
+
+            // Odchod v 5. sekunde
+            setTimeout(() => {
+                localStorage.setItem('srg_log', '2');
+                window.location.href = "prihlas.html";
+            }, 5000);
+        }
+
+        let clickCount = 0;
+        function handleExit() {
+            playBeep();
+            clickCount++;
+            if (clickCount === 3) { 
+                localStorage.clear();
+                window.location.href = "index.html"; 
+            }
+            setTimeout(() => { clickCount = 0; }, 1500);    
         }
 
         function zvacsiPanel() {
-            const frame = document.getElementById('mainFrame');
             const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 650);
             frame.style.transform = `scale(${scale})`;
             frame.style.transformOrigin = 'center center';
         }
 
-        window.onload = () => { zvacsiPanel(); aktualizujCas(); };
-        window.onresize = zvacsiPanel;
-
-        let clickCount = 0;
-        let clickTimer;
-        function checkTripleClick() {
-            clickCount++;
-            if (clickCount === 1) { clickTimer = setTimeout(() => { clickCount = 0; }, 1500); }
-            if (clickCount === 3) { window.location.href = "index.html"; }
-        }
-
         function aktualizujCas() {
             const teraz = new Date();
             const dni = ['Nedeľa', 'Pondelok', 'Utorok', 'Streda', 'Štvrtok', 'Piatok', 'Sobota'];
-            const h = String(teraz.getHours()).padStart(2, '0');
-            const m = String(teraz.getMinutes()).padStart(2, '0');
-            const s = String(teraz.getSeconds()).padStart(2, '0');
-            document.getElementById('hodiny').textContent = h + ":" + m + ":" + s;
+            document.getElementById('hodiny').textContent = teraz.toLocaleTimeString('sk-SK');
             document.getElementById('den_v_tyzdni').textContent = dni[teraz.getDay()];
-            const rok = teraz.getFullYear();
-            const mesiac = String(teraz.getMonth() + 1).padStart(2, '0');
-            const den = String(teraz.getDate()).padStart(2, '0');
-            document.getElementById('datum_dnes').textContent = rok + "-" + mesiac + "-" + den;
+            document.getElementById('datum_dnes').textContent = teraz.toISOString().split('T')[0];
         }
-        setInterval(aktualizujCas, 1000);
+
+        window.onload = () => { zvacsiPanel(); aktualizujCas(); setInterval(aktualizujCas, 1000); };
+        window.onresize = zvacsiPanel;
     </script>
 </body>
 </html>

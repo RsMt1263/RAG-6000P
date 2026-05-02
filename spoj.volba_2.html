@@ -3,100 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SRG-6000P - Výber turnusu</title>
+    <title>SRG-6000P - Výber poradia</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-            font-weight: 400;
-            color: white;
-            touch-action: manipulation;
+        body { 
+            margin: 0; padding: 0; background-color: #000; 
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; overflow: hidden; font-family: Arial, sans-serif; 
+            font-weight: 400; color: white; touch-action: manipulation; 
+        }
+        
+        .monitor-container { 
+            position: relative; 
+            width: 1000px; height: 650px; 
+            background: url('6000_zmena2.png') no-repeat center center; 
+            background-size: contain; flex-shrink: 0; 
         }
 
-        .monitor-container {
-            position: relative;
-            width: 1000px; 
-            height: 650px; 
-            background: url('6000_zmena2.png') no-repeat center center;
-            background-size: contain;
-            flex-shrink: 0;
-        }
-
-        /* ZOZNAM ČÍSIEL (SIVÝ BOX) */
+        /* ZOZNAM PORADÍ */
         .zoznam-spojov {
             position: absolute;
-            left: 182px;   
-            top: 137px;    
-            width: 296px;  
-            height: 433px; 
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            z-index: 20;
-            padding: 0;
+            left: 182px; top: 137px; width: 296px; height: 433px; 
+            overflow-y: hidden; 
+            display: flex; flex-direction: column;
+            z-index: 20; padding: 0;
         }
 
         .spoj-polozka {
-            padding: 4px 5px; 
+            padding: 8px 10px; 
             font-size: 26px; 
-            font-weight: normal;
             color: #ccc; 
-            cursor: pointer;
+            cursor: pointer; 
             background-size: 100% 100%;
             background-repeat: no-repeat;
-            border: none;
-            line-height: 1.0;
+            border: none; 
+            line-height: 1.0; 
         }
 
-        /* VÝBER - TYRKYSOVÝ PÁS CEZ CELÝ RIADOK */
+        /* VÝBER - TYRKYSOVÝ PÁS */
         .selected {
             background-color: #5ec6ca !important; 
             color: #000 !important; 
         }
 
-        /* POLÍČKO PRE KÓD VRAVO */
-        #displej-kod {
-            position: absolute;
-            left: 566px;   
-            top: 192px;    
-            width: 200px;
-            height: 55px;
-            background: transparent; 
-            border: none;
-            color: #ccc;
-            font-size: 37px;
-            font-family: Arial, sans-serif;
-            text-align: right;
-            z-index: 30;
-            pointer-events: none;
-        }
-
-        /* TLAČIDLO POTVRDIŤ */
-        #tlacidlo-potvrd {
-            position: absolute;
-            left: 550px;   
-            top: 288px;    
-            width: 209px;
-            height: 72px;
-            cursor: pointer;
-            z-index: 1000;
+        /* KLIKACIE ZÓNY (NEVIDITEĽNÉ) */
+        .btn-nav { 
+            position: absolute; width: 65px; cursor: pointer; z-index: 1000; 
             background: transparent; 
         }
+        
+        #btn-spat-hard  { left: 101px; top: 70px; height: 62px; } 
+        #btn-vpred { left: 101px; top: 140px; height: 62px; } 
+        #btn-vzad  { left: 101px; top: 209px; height: 62px; } 
 
-        /* TYRKYSOVÉ TLAČIDLO SPÄŤ */
+        #tlacidlo-vypnut { position: absolute; right: 55px; top: 55px; width: 75px; height: 65px; z-index: 1001; cursor: pointer; }
+        #tlacidlo-potvrd { position: absolute; left: 550px; top: 288px; width: 209px; height: 72px; z-index: 1000; cursor: pointer; }
+
+        /* TYRKYSOVÉ TLAČIDLO SPÄŤ (TEXTOVÉ) */
         #tlacidlo-spat-textove {
             position: absolute;
-            left: 552px;   
-            top: 375px;    
-            width: 210px;  
-            height: 72px;
+            left: 552px; top: 375px; width: 210px; height: 72px;
             background-color: #1a94ab; 
             color: white;
             font-size: 40px;
@@ -110,133 +75,164 @@
             text-decoration: none;
         }
 
-        #tlacidlo-spat-textove:active {
-            background-color: #147a8d;
-        }
+        #tlacidlo-spat-textove:active { background-color: #147a8d; }
 
-        /* HODINY */
-        .cas-kontajner {
-            position: absolute;
-            left: 575px;
-            top: 500px;
-            width: 209px;
-            text-align: center;
-            z-index: 10;
-            pointer-events: none;
+        /* DISPLEJ A HODINY */
+        #displej-kod { 
+            position: absolute; left: 566px; top: 192px; width: 200px; height: 55px; 
+            background: transparent; border: none; color: #ccc; 
+            font-size: 37px; text-align: right; pointer-events: none; 
         }
-
-        #hodiny-prihlas {
-            font-size: 40px;
-            color: #ffffff;
-            font-weight: bold;
-        }
-
-        .zoznam-spojov::-webkit-scrollbar { display: none; }
+        
+        .cas-kontajner { position: absolute; left: 575px; top: 500px; width: 209px; text-align: center; }
+        #hodiny { font-size: 40px; color: #ffffff; font-weight: bold; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
+
+    <audio id="beepSound" src="6000_beep.wav" preload="auto"></audio>
 
     <div class="monitor-container" id="mainFrame">
-        <input type="text" id="displej-kod" readonly value="">
-        <div id="tlacidlo-potvrd" onclick="potvrdit()"></div>
+        <!-- Vypnutie -->
+        <div id="tlacidlo-vypnut" onclick="checkTripleClick()"></div>
         
+        <!-- Navigácia -->
+        <div id="btn-spat-hard" class="btn-nav" onclick="istSpat()"></div>
+        <div id="btn-vpred" class="btn-nav" onclick="navigujZoznam(1)"></div>
+        <div id="btn-vzad" class="btn-nav" onclick="navigujZoznam(-1)"></div>
+        
+        <!-- Potvrdenie a Späť (textové) -->
+        <div id="tlacidlo-potvrd" onclick="potvrdit()"></div>
         <div id="tlacidlo-spat-textove" onclick="istSpat()">Späť</div>
 
+        <input type="text" id="displej-kod" readonly value="">
+
         <div class="cas-kontajner">
-            <div id="hodiny-prihlas">00:00:00</div>
+            <div id="hodiny">00:00:00</div>
         </div>
 
         <div class="zoznam-spojov" id="zoznam-dynamicky"></div>
     </div>
 
     <script>
-    // 1. KONTROLA STAVU
-    const srgLog = localStorage.getItem('srg_log') || "";
-
-    if (!srgLog.startsWith('5')) {
-        localStorage.clear();
-        window.location.href = "index.html";
-    }
-
-    // Vyčistíme starú voľbu pri načítaní
-    localStorage.removeItem('vybrane_poradie');
-
-    // 2. DÁTA PORADÍ
-    const dataPoradia = {
-        "5.11": ["41", "42", "43", "44"],
-        "5.21": ["41"],
-        "5.900": ["01"]
-    };
-
-    // 3. GENEROVANIE
-    function nacitajZoznam() {
-        const kontajner = document.getElementById('zoznam-dynamicky');
-        const poradia = dataPoradia[srgLog] || ["--"];
-
-        kontajner.innerHTML = "";
-        poradia.forEach(cislo => {
-            const div = document.createElement('div');
-            div.className = "spoj-polozka";
-            div.innerText = cislo;
-            div.onclick = function() { vyberPoradie(this, cislo); };
-            kontajner.appendChild(div);
-        });
-    }
-
-    function vyberPoradie(element, cislo) {
-        const polozky = document.querySelectorAll('.spoj-polozka');
-        polozky.forEach(p => p.classList.remove('selected'));
-        element.classList.add('selected');
-        
-        document.getElementById('displej-kod').value = cislo;
-        localStorage.setItem('vybrane_poradie', cislo);
-    }
-
-    // 4. POTVRDENIE - SPÁJANIE ČÍSIEL (napr. 6.3141)
-    function potvrdit() {
-        const vybrane = localStorage.getItem('vybrane_poradie');
-        if (vybrane) {
-            // Získame číslo linky z logu (napr. z "5.31" dostaneme "31")
-            const linka = srgLog.split('.')[1];
-            
-            // Spojíme to do formátu 6.LinkaPoradie
-            const novyLog = "6." + linka + vybrane;
-            
-            localStorage.setItem('srg_log', novyLog);
-            window.location.href = "spoj.volba_3.html";
-        } else {
-            alert("Zvoľ kód služby!");
+        // --- 1. STRIKTNÁ KONTROLA STAVU ---
+        const srgLog = localStorage.getItem('srg_log') || "";
+        if (!srgLog.startsWith('5')) {
+            localStorage.clear();
+            window.location.href = "index.html";
         }
-    }
 
-    function istSpat() {
-        localStorage.setItem('srg_log', '4');
-        window.location.href = "spoj.volba_1.html";
-    }
+        const snd = document.getElementById('beepSound');
+        let aktualnyIndex = -1;
 
-    function aktualizujHodiny() {
-        const teraz = new Date();
-        const h = String(teraz.getHours()).padStart(2, '0');
-        const m = String(teraz.getMinutes()).padStart(2, '0');
-        const s = String(teraz.getSeconds()).padStart(2, '0');
-        const el = document.getElementById('hodiny-prihlas');
-        if (el) el.textContent = h + ":" + m + ":" + s;
-    }
-    setInterval(aktualizujHodiny, 1000);
+        // Ochrana proti refreshu
+        window.onbeforeunload = function() { return "Zmeny nebudú uložené."; };
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) e.preventDefault();
+        });
 
-    function zvacsiPanel() {
-        const frame = document.getElementById('mainFrame');
-        const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 650);
-        frame.style.transform = `scale(${scale})`;
-        frame.style.transformOrigin = 'center center';
-    }
+        // Dáta poradí
+        const dataPoradia = {
+            "5.11": ["41", "42", "43", "44","45"],
+            "5.21": ["41"],
+            "5.900": ["01"]
+        };
 
-    window.onload = () => {
-        zvacsiPanel();
-        aktualizujHodiny();
-        nacitajZoznam();
-    };
-    window.onresize = zvacsiPanel;
+        function playBeep() {
+            if (snd) { snd.currentTime = 0; snd.play().catch(e => {}); }
+        }
+
+        function nacitajZoznam() {
+            const kontajner = document.getElementById('zoznam-dynamicky');
+            const poradia = dataPoradia[srgLog] || ["--"];
+
+            kontajner.innerHTML = "";
+            poradia.forEach((cislo, index) => {
+                const div = document.createElement('div');
+                div.className = "spoj-polozka";
+                div.innerText = cislo;
+                div.setAttribute('data-kod', cislo);
+                div.onclick = function() { vyberPoradie(this, index); };
+                kontajner.appendChild(div);
+            });
+        }
+
+        function vyberPoradie(element, index) {
+            playBeep();
+            const polozky = document.querySelectorAll('.spoj-polozka');
+            polozky.forEach(p => p.classList.remove('selected'));
+            
+            element.classList.add('selected');
+            aktualnyIndex = index;
+            
+            const cislo = element.getAttribute('data-kod');
+            document.getElementById('displej-kod').value = cislo;
+            localStorage.setItem('vybrane_poradie', cislo);
+
+            element.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+
+        function navigujZoznam(smer) {
+            const polozky = document.querySelectorAll('.spoj-polozka');
+            let novyIndex = aktualnyIndex + smer;
+
+            if (novyIndex >= 0 && novyIndex < polozky.length) {
+                vyberPoradie(polozky[novyIndex], novyIndex);
+            }
+        }
+
+        function potvrdit() {
+            const vybrane = localStorage.getItem('vybrane_poradie');
+            if (vybrane) {
+                window.onbeforeunload = null;
+                playBeep();
+                const linka = srgLog.split('.')[1];
+                const novyLog = "6." + linka + vybrane;
+                localStorage.setItem('srg_log', novyLog);
+                setTimeout(() => { window.location.href = "spoj.volba_3.html"; }, 800);
+            }
+        }
+
+        function istSpat() {
+            window.onbeforeunload = null;
+            playBeep();
+            localStorage.setItem('srg_log', '4');
+            setTimeout(() => { window.location.href = "spoj.volba_1.html"; }, 800);
+        }
+
+        // Trojklik na vypnutie
+        let clickCount = 0;
+        let clickTimer;
+        function checkTripleClick() {
+            playBeep();
+            clickCount++;
+            if (clickCount === 1) { clickTimer = setTimeout(() => { clickCount = 0; }, 1500); }
+            if (clickCount === 3) { 
+                window.onbeforeunload = null;
+                localStorage.clear();
+                window.location.href = "index.html"; 
+            }
+        }
+
+        function aktualizujHodiny() {
+            document.getElementById('hodiny').textContent = new Date().toLocaleTimeString('sk-SK');
+        }
+        setInterval(aktualizujHodiny, 1000);
+
+        function zvacsiPanel() {
+            const frame = document.getElementById('mainFrame');
+            const scale = Math.min(window.innerWidth / 1000, window.innerHeight / 650);
+            frame.style.transform = `scale(${scale})`;
+            frame.style.transformOrigin = 'center center';
+        }
+
+        window.onload = () => {
+            localStorage.removeItem('vybrane_poradie');
+            zvacsiPanel();
+            aktualizujHodiny();
+            nacitajZoznam();
+        };
+        window.onresize = zvacsiPanel;
     </script>
 </body>
 </html>

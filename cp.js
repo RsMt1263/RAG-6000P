@@ -2,8 +2,8 @@
 
 const trasy = {
     // KOMPLETNÁ TRASA SMER NIŽNÁ ŠEBASTOVÁ
-    sebas: [
-        {n: "Solivar", u: "Solivarská ul.", min: 0},
+    soliv: [
+        {n: "Nižná Šebastová", u: "Vranovská ul.", min: 0},
         {n: "Zborov, Staré Nádraží", u: "Zborovská ul.", min: 1},
         {n: "Mladějovská", u: "Zborovská ul.", min: 2},
         {n: "Na Cvičišti", u: "Zborovská ul.", min: 3},
@@ -23,12 +23,20 @@ const trasy = {
         {n: "Háje, Hypermarket", u: "Okružní ul.", min: 20},
         {n: "V Osadách", u: "Okružní ul.", min: 21},
         {n: "Borovecká", u: "Borovecká ul.", min: 22},                      
-        {n: "Nižná Šebastová", u: "Vranovská ul.", min: 24}
+        {n: "Solivar", u: "Solivarská ul.", min: 24}
+    ],
+    nsdp: [
+        {n: "Nižná Šebastová", u: "Vranovská ul.", min: 0},
+        {n: "Zborov, Staré Nádraží", u: "Zborovská ul.", min: 1},
+        {n: "Mladějovská", u: "Zborovská ul.", min: 2},
+        {n: "Na Cvičišti", u: "Zborovská ul.", min: 3},
+        {n: "Nákupní Zóna", u: "Zborovská ul.", min: 4},
+        {n: "Dopravný Podnik", u: "Bardejovská ul.", min: 6},
     ],
 
     // KOMPLETNÁ TRASA SMER SOLIVAR
-    soliv: [
-        {n: "Nižná Šebastová", u: "Vranovská ul.", min: 0},
+    sebas: [
+        {n: "Solivar", u: "Solivarská ul.", min: 0},
         {n: "Václava Volfa", u: "Ul. Václava Volfa", min: 1},
         {n: "Okružní", u: "Ul. Václava Volfa", min: 2},
         {n: "V Osadách", u: "Okružní ul.", min: 3},
@@ -49,7 +57,7 @@ const trasy = {
         {n: "Na Cvičišti", u: "Zborovská ul.", min: 20},
         {n: "Mladějovská", u: "Zborovská ul.", min: 21},
         {n: "Zborov, Staré Nádraží", u: "Zborovská ul.", min: 22},
-        {n: "Solivar", u: "Solivarská ul.", min: 24}
+        {n: "Nižná Šebastová", u: "Vranovská ul.", min: 24}
     ],
 
     // TECHNOLOGICKÉ TRASY
@@ -64,30 +72,113 @@ const trasy = {
     dojazd: [
         {n: "Nižná Šebastová", u: "Vranovská ul.", min: 0},
         {n: "Garáž", u: "Bardejovská ul.", min: 6}
+    ],
+    dpgaraz: [
+        {n: "Dopravný Podnik", u: "Bardejovská ul.", min: 0},
+        {n: "Garáž", u: "Bardejovská ul.", min: 2}
     ]
 };
 
-const databazaCP = {
-    "1142": {
-        "vozidlo": "803", // Číslo vozidla priradené k tomuto kurzu
-        "SO/NE/SVIATOK": [
-            { id: 0, L: "#", smer: "Technologická Jazda", odchod: "21:15", t: trasy.najazd_sebas },
-            { id: 1, L: "1", smer: "Nižná Šebastová", odchod: "14:07", t: trasy.sebas },
-            { id: 2, L: "1", smer: "Solivar", odchod: "14:32", t: trasy.soliv },
-            { id: 3, L: "1", smer: "Nižná Šebastová", odchod: "15:37", t: trasy.sebas },
-            { id: 4, L: "1", smer: "Solivar", odchod: "16:02", t: trasy.soliv },
-            { id: 5, L: "1", smer: "Nižná Šebastová", odchod: "16:37", t: trasy.sebas },
-            { id: 6, L: "1", smer: "Solivar", odchod: "17:02", t: trasy.soliv },
-            { id: 7, L: "1", smer: "Nižná Šebastová", odchod: "17:37", t: trasy.sebas },
-            { id: 8, L: "1", smer: "Solivar", odchod: "18:02", t: trasy.soliv },
-            { id: 9, L: "1", smer: "Nižná Šebastová", odchod: "18:37", t: trasy.sebas },
-            { id: 10, L: "1", smer: "Solivar", odchod: "19:02", t: trasy.soliv },
-            { id: 11, L: "1", smer: "Nižná Šebastová", odchod: "20:07", t: trasy.sebas },
+const databazaCP = 
+
+{
+    "1141": {
+        "vozidlo": "706", // Číslo vozidla priradené k tomuto kurzu
+        "PD-ŠKOLSKÝ ROK": [
+            { id: 0, L: "#", smer: "Technologická Jazda", odchod: "13:15", t: trasy.najazd_solivar },
+            { id: 1, L: "1", smer: "Nižná Šebastová", odchod: "13:30", t: trasy.sebas },
+            { id: 2, L: "1", smer: "Solivar", odchod: "14:00", t: trasy.soliv },
+            { id: 3, L: "1", smer: "Nižná Šebastová", odchod: "14:45", t: trasy.sebas },
+            { id: 4, L: "1", smer: "Solivar", odchod: "15:15", t: trasy.soliv },
+            { id: 5, L: "1", smer: "Nižná Šebastová", odchod: "16:00", t: trasy.sebas },
+            { id: 6, L: "1", smer: "Solivar", odchod: "16:30", t: trasy.soliv },
+            { id: 7, L: "1", smer: "Nižná Šebastová", odchod: "17:15", t: trasy.sebas },
+            { id: 8, L: "1", smer: "Solivar", odchod: "17:55", t: trasy.soliv },
+            { id: 9, L: "1", smer: "Nižná Šebastová", odchod: "18:45", t: trasy.sebas },
+            { id: 10, L: "1", smer: "Solivar", odchod: "19:15", t: trasy.soliv },
+            { id: 11, L: "1", smer: "Nižná Šebastová", odchod: "20:05", t: trasy.sebas },
             { id: 12, L: "1", smer: "Solivar", odchod: "20:32", t: trasy.soliv },
             { id: 13, L: "1", smer: "Nižná Šebastová", odchod: "21:07", t: trasy.sebas },
             { id: 14, L: "1", smer: "Solivar", odchod: "21:32", t: trasy.soliv },
             { id: 15, L: "1", smer: "Nižná Šebastová", odchod: "22:07", t: trasy.sebas },
             { id: 16, L: "#", smer: "Technologická Jazda", odchod: "22:31", t: trasy.dojazd }
+        ]
+    },
+
+    "1142": {
+        "vozidlo": "3443", // Číslo vozidla priradené k tomuto kurzu
+        "PD-ŠKOLSKÝ ROK": [
+            { id: 0, L: "#", smer: "Technologická Jazda", odchod: "13:45", t: trasy.najazd_solivar },
+            { id: 1, L: "1", smer: "Nižná Šebastová", odchod: "14:00", t: trasy.sebas },
+            { id: 2, L: "1", smer: "Solivar", odchod: "14:30", t: trasy.soliv },
+            { id: 3, L: "1", smer: "Nižná Šebastová", odchod: "15:15", t: trasy.sebas },
+            { id: 4, L: "1", smer: "Solivar", odchod: "15:45", t: trasy.soliv },
+            { id: 5, L: "1", smer: "Nižná Šebastová", odchod: "16:30", t: trasy.sebas },
+            { id: 6, L: "1", smer: "Solivar", odchod: "17:00", t: trasy.soliv },
+            { id: 7, L: "1", smer: "Nižná Šebastová", odchod: "17:45", t: trasy.sebas },
+            { id: 8, L: "1", smer: "Solivar", odchod: "18:15", t: trasy.soliv },
+            { id: 9, L: "1", smer: "Nižná Šebastová", odchod: "19:05", t: trasy.sebas },
+            { id: 10, L: "1", smer: "Solivar", odchod: "19:35", t: trasy.soliv },
+            { id: 11, L: "1", smer: "Nižná Šebastová", odchod: "20:25", t: trasy.sebas },
+            { id: 12, L: "1", smer: "Solivar", odchod: "21:02", t: trasy.soliv },
+            { id: 13, L: "1", smer: "Nižná Šebastová", odchod: "21:37", t: trasy.sebas },
+            { id: 14, L: "1", smer: "Dopravný Podnik", odchod: "22:02", t: trasy.nsdp },
+            { id: 15, L: "#", smer: "Technologická Jazda", odchod: "22:08", t: trasy.dpgaraz }
+        ]
+    },
+
+    "1143": {
+        "vozidlo": "701", // Číslo vozidla priradené k tomuto kurzu
+        "PD-ŠKOLSKÝ ROK": [
+            { id: 0, L: "#", smer: "Technologická Jazda", odchod: "12:45", t: trasy.najazd_solivar },
+            { id: 1, L: "1", smer: "Nižná Šebastová", odchod: "13:00", t: trasy.sebas },
+            { id: 2, L: "1", smer: "Solivar", odchod: "13:30", t: trasy.soliv },
+            { id: 3, L: "1", smer: "Nižná Šebastová", odchod: "14:15", t: trasy.sebas },
+            { id: 4, L: "1", smer: "Solivar", odchod: "14:45", t: trasy.soliv },
+            { id: 5, L: "1", smer: "Nižná Šebastová", odchod: "15:30", t: trasy.sebas },
+            { id: 6, L: "1", smer: "Solivar", odchod: "16:00", t: trasy.soliv },
+            { id: 7, L: "1", smer: "Nižná Šebastová", odchod: "16:45", t: trasy.sebas },
+            { id: 8, L: "1", smer: "Solivar", odchod: "17:15", t: trasy.soliv },
+            { id: 9, L: "1", smer: "Nižná Šebastová", odchod: "18:05", t: trasy.sebas },
+            { id: 10, L: "1", smer: "Solivar", odchod: "18:35", t: trasy.soliv },
+            { id: 11, L: "1", smer: "Nižná Šebastová", odchod: "19:25", t: trasy.sebas },
+            { id: 12, L: "1", smer: "Solivar", odchod: "20:02", t: trasy.soliv },
+            { id: 13, L: "1", smer: "Nižná Šebastová", odchod: "20:45", t: trasy.sebas },
+            { id: 14, L: "#", smer: "Technologická Jazda", odchod: "21:09", t: trasy.dojazd }
+        ]
+    },
+
+    "1144": {
+        "vozidlo": "802", // Číslo vozidla priradené k tomuto kurzu
+        "PD-ŠKOLSKÝ ROK": [
+            { id: 0, L: "#", smer: "Technologická Jazda", odchod: "13:00", t: trasy.najazd_solivar },
+            { id: 1, L: "1", smer: "Nižná Šebastová", odchod: "13:15", t: trasy.sebas },
+            { id: 2, L: "1", smer: "Solivar", odchod: "13:45", t: trasy.soliv },
+            { id: 3, L: "1", smer: "Nižná Šebastová", odchod: "14:30", t: trasy.sebas },
+            { id: 4, L: "1", smer: "Solivar", odchod: "15:00", t: trasy.soliv },
+            { id: 5, L: "1", smer: "Nižná Šebastová", odchod: "15:45", t: trasy.sebas },
+            { id: 6, L: "1", smer: "Solivar", odchod: "16:15", t: trasy.soliv },
+            { id: 7, L: "1", smer: "Nižná Šebastová", odchod: "17:00", t: trasy.sebas },
+            { id: 8, L: "1", smer: "Solivar", odchod: "17:35", t: trasy.soliv },
+            { id: 9, L: "1", smer: "Nižná Šebastová", odchod: "18:25", t: trasy.sebas },
+            { id: 10, L: "1", smer: "Solivar", odchod: "18:55", t: trasy.soliv },
+            { id: 11, L: "1", smer: "Nižná Šebastová", odchod: "19:45", t: trasy.sebas },
+            { id: 12, L: "#", smer: "Technologická Jazda", odchod: "20:09", t: trasy.dojazd }
+        ]
+    },
+    "1145": {
+        "vozidlo": "804", // Číslo vozidla priradené k tomuto kurzu
+        "PD-ŠKOLSKÝ ROK": [
+            { id: 0, L: "#", smer: "Technologická Jazda", odchod: "13:09", t: trasy.najazd_sebas},
+            { id: 1, L: "1", smer: "Solivar", odchod: "13:15", t: trasy.soliv },
+            { id: 2, L: "1", smer: "Nižná Šebastová", odchod: "13:45", t: trasy.sebas },
+            { id: 3, L: "1", smer: "Solivar", odchod: "14:15", t: trasy.soliv },
+            { id: 4, L: "1", smer: "Nižná Šebastová", odchod: "15:00", t: trasy.sebas },
+            { id: 5, L: "1", smer: "Solivar", odchod: "15:30", t: trasy.soliv },
+            { id: 6, L: "1", smer: "Nižná Šebastová", odchod: "16:15", t: trasy.sebas },
+            { id: 7, L: "1", smer: "Solivar", odchod: "16:45", t: trasy.soliv },
+            { id: 8, L: "1", smer: "Nižná Šebastová", odchod: "17:30", t: trasy.sebas },
+            { id: 9, L: "#", smer: "Technologická Jazda", odchod: "17:56", t: trasy.dojazd }
         ]
     }
 };

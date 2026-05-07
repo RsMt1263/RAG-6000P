@@ -1,9 +1,9 @@
 // login.js - Databáza a logika overovania
 const users = [
-    { id: "999", pin: "0000", meno: "Admin" },
-    { id: "001", pin: "126316", meno: "RsMt1263" },
-    { id: "003", pin: "281209", meno: "Petik_Plays" },
-    { id: "005", pin: "221465", meno: "Helocz 72" }
+    { id: "9999", pin: "000000", meno: "Admin" },
+    { id: "1001", pin: "126316", meno: "RsMt1263" },
+    { id: "1002", pin: "281209", meno: "LUKASím" },
+    { id: "1003", pin: "221465", meno: "-" }
 ];
 
 let prebiehaOverovanie = false;

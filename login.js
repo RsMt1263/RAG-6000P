@@ -2,7 +2,10 @@
 const users = [
     { id: "9999", pin: "011100", meno: "Admin" },
     { id: "1001", pin: "126316", meno: "RsMt1263" },
-    { id: "1002", pin: "280167", meno: "LUKASím" }
+    { id: "1002", pin: "280167", meno: "LUKASím" },
+    { id: "1005", pin: "163616", meno: "Helocz72" },
+    { id: "1006", pin: "012686", meno: "fotograf_z_poruby" },
+    { id: "1007", pin: "010110", meno: "seba_456" },
 ];
 
 let prebiehaOverovanie = false;

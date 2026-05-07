@@ -41,12 +41,12 @@
         .vehicle-info { position: absolute; top: 189.5px; right: 380px; font-size: 20px; color: #ffffff; }
         .stop-count { position: absolute; top: 213px; left: 280px; font-size: 20px; color: #ffffff; }
         
-        /* --- DYNAMICKÁ ČIARA --- */
+        /* --- OPRAVENÉ VIZUÁLNE HRANICE --- */
         .route-window {
             position: absolute;
             top: 298px;
             left: 175px;
-            width: 650px;
+            width: 615px; /* Upravené aby nešlo do sivej */
             height: 40px;
             overflow: hidden;
             display: flex;
@@ -59,7 +59,7 @@
             align-items: center;
             transition: left 0.4s ease-in-out;
             height: 100%;
-            left: 0;
+            left: 25px; /* Odstup aby prvá gulička nebola polovičná */
         }
 
         #actual-line {
@@ -87,13 +87,14 @@
         #marker {
             position: absolute;
             top: 267px;
-            left: 175px;
+            left: 200px; /* Zarovnané na stred prvej guličky (175 + 25) */
             width: 0; height: 0;
             border-left: 12px solid transparent;
             border-right: 12px solid transparent;
             border-top: 22px solid #ffffff;
             transition: left 0.4s ease-in-out;
             z-index: 20;
+            transform: translateX(-50%); /* Presné vycentrovanie špičky */
         }
 
         .current-stop-container { position: absolute; top: 343px; left: 75px; width: 785px; text-align: center; }
@@ -168,8 +169,9 @@
     let aktivnySpoj, zastavky, startTime;
     const snd = document.getElementById('click-sound');
 
-    const viewportWidth = 650;
-    const centerPoint = viewportWidth / 2;
+    // Opravené konštanty pre výpočet
+    const viewportWidth = 615;
+    const sliderPadding = 25; 
     let dotSpacing = 160;
 
     window.onbeforeunload = function() { return "Zmeny nebudú uložené."; };
@@ -263,8 +265,10 @@
         slider.innerHTML = '<div id="actual-line"></div>';
         const line = document.getElementById('actual-line');
         
-        if (zastavky.length > 1 && zastavky.length < 5) {
-            dotSpacing = viewportWidth / (zastavky.length - 1);
+        // Dynamické prispôsobenie medzier pri malom počte zastávok
+        const availableWidth = viewportWidth - (sliderPadding * 2);
+        if (zastavky.length > 1 && (zastavky.length - 1) * 160 < availableWidth) {
+            dotSpacing = availableWidth / (zastavky.length - 1);
         } else {
             dotSpacing = 160;
         }
@@ -294,28 +298,28 @@
         document.getElementById('total-idx').innerText = zastavky.length - 1;
         
         let stopX = currentIndex * dotSpacing;
-        let sliderLeft = 12;
-        let markerPos = 175 + stopX;
-        const totalRouteWidth = (zastavky.length - 1) * dotSpacing;
+        let totalRouteWidth = (zastavky.length - 1) * dotSpacing;
+        
+        let sliderL = sliderPadding;
+        let markerL = 175 + sliderPadding + stopX;
 
-        if (totalRouteWidth > viewportWidth) {
-            sliderLeft = centerPoint - stopX;
-            if (sliderLeft > 0) {
-                sliderLeft = 0;
-                markerPos = 175 + stopX;
-            } else if (sliderLeft < (viewportWidth - totalRouteWidth)) {
-                sliderLeft = viewportWidth - totalRouteWidth;
-                markerPos = 175 + (stopX + sliderLeft);
+        // Logika posuvu čiary
+        if (totalRouteWidth > (viewportWidth - sliderPadding * 2)) {
+            sliderL = (viewportWidth / 2) - stopX;
+            
+            if (sliderL > sliderPadding) {
+                sliderL = sliderPadding;
+                markerL = 175 + sliderL + stopX;
+            } else if (sliderL < (viewportWidth - totalRouteWidth - sliderPadding)) {
+                sliderL = viewportWidth - totalRouteWidth - sliderPadding;
+                markerL = 175 + sliderL + stopX;
             } else {
-                markerPos = 175 + centerPoint;
+                markerL = 175 + (viewportWidth / 2);
             }
-        } else {
-            sliderLeft = 0;
-            markerPos = 175 + stopX;
         }
 
-        slider.style.left = sliderLeft + "px";
-        marker.style.left = markerPos + "px";
+        slider.style.left = sliderL + "px";
+        marker.style.left = markerL + "px";
 
         document.getElementById('p1').innerText = currentIndex > 0 ? zastavky[currentIndex - 1].n : "-------";
         document.getElementById('p2').innerText = currentIndex > 1 ? zastavky[currentIndex - 2].n : "-------";

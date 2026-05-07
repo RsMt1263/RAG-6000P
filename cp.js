@@ -11,7 +11,7 @@ const trasy = {
         {n: "Dopravný Podnik", u: "Bardejovská ul.", min: 5},
         {n: "Městské Lázně", u: "Spolková ul.", min: 7},
         {n: "U Lišky", u: "Spolková ul.", min: 8},
-        {n: "Autobusové Nádraží Spolková", u: "Spolková ul.", min: 9},
+        {n: "AN Spolková", u: "Spolková ul.", min: 9},
         {n: "Marie Sklodowské", u: "Ul. Marie Sklodowské", min: 10},
         {n: "Náměstí Osovobození", u: "Obchodní ul.", min: 12},
         {n: "Obchodní", u: "Obchodní ul.", min: 13},
@@ -49,7 +49,7 @@ const trasy = {
         {n: "Obchodní", u: "Obchodní ul.", min: 10},
         {n: "Náměstí Osovobození", u: "Obchodní ul.", min: 11},
         {n: "Marie Sklodowské", u: "Ul. Marie Sklodowské", min: 12},
-        {n: "Autobusové Nádraží Spolková", u: "Spolková ul.", min: 14},
+        {n: "AN Spolková", u: "Spolková ul.", min: 14},
         {n: "U Lišky", u: "Spolková ul.", min: 15},
         {n: "Městské Lázně", u: "Spolková ul.", min: 16},
         {n: "Dopravný Podnik", u: "Bardejovská ul.", min: 18},
@@ -83,7 +83,7 @@ const databazaCP =
 
 {
     "1141": {
-        "vozidlo": "706", // Číslo vozidla priradené k tomuto kurzu
+        "vozidlo": "802", // Číslo vozidla priradené k tomuto kurzu
         "PD-ŠKOLSKÝ ROK": [
             { id: 0, L: "#", smer: "Technologická Jazda", odchod: "13:15", t: trasy.najazd_solivar },
             { id: 1, L: "1", smer: "Nižná Šebastová", odchod: "13:30", t: trasy.sebas },
@@ -106,7 +106,7 @@ const databazaCP =
     },
 
     "1142": {
-        "vozidlo": "3443", // Číslo vozidla priradené k tomuto kurzu
+        "vozidlo": "706", // Číslo vozidla priradené k tomuto kurzu
         "PD-ŠKOLSKÝ ROK": [
             { id: 0, L: "#", smer: "Technologická Jazda", odchod: "13:45", t: trasy.najazd_solivar },
             { id: 1, L: "1", smer: "Nižná Šebastová", odchod: "14:00", t: trasy.sebas },
@@ -128,7 +128,7 @@ const databazaCP =
     },
 
     "1143": {
-        "vozidlo": "701", // Číslo vozidla priradené k tomuto kurzu
+        "vozidlo": "3443", // Číslo vozidla priradené k tomuto kurzu
         "PD-ŠKOLSKÝ ROK": [
             { id: 0, L: "#", smer: "Technologická Jazda", odchod: "12:45", t: trasy.najazd_solivar },
             { id: 1, L: "1", smer: "Nižná Šebastová", odchod: "13:00", t: trasy.sebas },
@@ -149,7 +149,7 @@ const databazaCP =
     },
 
     "1144": {
-        "vozidlo": "802", // Číslo vozidla priradené k tomuto kurzu
+        "vozidlo": "701", // Číslo vozidla priradené k tomuto kurzu
         "PD-ŠKOLSKÝ ROK": [
             { id: 0, L: "#", smer: "Technologická Jazda", odchod: "13:00", t: trasy.najazd_solivar },
             { id: 1, L: "1", smer: "Nižná Šebastová", odchod: "13:15", t: trasy.sebas },

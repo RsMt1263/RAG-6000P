@@ -2,7 +2,7 @@
 const users = [
     { id: "9999", pin: "000000", meno: "Admin" },
     { id: "1001", pin: "126316", meno: "RsMt1263" },
-    { id: "1002", pin: "281209", meno: "LUKASím" },
+    { id: "1002", pin: "280167", meno: "LUKASím" },
     { id: "1003", pin: "221465", meno: "-" }
 ];
 
